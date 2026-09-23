@@ -1,3 +1,6 @@
+<?php
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -163,152 +166,49 @@
 </tr>
 </thead>
 <tbody>
+
+<?php
+$sno = 1;
+
+while ($row = $academic_result->fetch_assoc()) {
+?>
+
 <tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">1</td>
-<td class="px-4 py-2 border">08/03/2025</td>
-<td class="px-4 py-2 border">Shanmugapriya N, Pavithra M</td>
-<td class="px-4 py-2 border">I IT</td>
-<td class="px-4 py-2 border">Women’s Day Tableau Event</td>
-<td class="px-4 py-2 border">II Prize (₹3000)</td>
-<td class="px-4 py-2 border">Collector Office, Theni</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">2</td>
-<td class="px-4 py-2 border">Oct-2024</td>
-<td class="px-4 py-2 border">B. Sujitha</td>
-<td class="px-4 py-2 border">II IT</td>
-<td class="px-4 py-2 border">Data Visualization with Power BI</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Great Learning</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">3</td>
-<td class="px-4 py-2 border">14/10/2024</td>
-<td class="px-4 py-2 border">T. Safrin</td>
-<td class="px-4 py-2 border">II IT</td>
-<td class="px-4 py-2 border">Software Development</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Skill Up</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">4</td>
-<td class="px-4 py-2 border">26/01/2025</td>
-<td class="px-4 py-2 border">S. Logeswari</td>
-<td class="px-4 py-2 border">II IT</td>
-<td class="px-4 py-2 border">BootCamp</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">NoviTech</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">5</td>
-<td class="px-4 py-2 border">26/12/2024–02/02/2025</td>
-<td class="px-4 py-2 border">R. Vaitheeshwari</td>
-<td class="px-4 py-2 border">II IT</td>
-<td class="px-4 py-2 border">Master Class</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">NoviTech</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">6</td>
-<td class="px-4 py-2 border">01/01/2025–28/02/2025</td>
-<td class="px-4 py-2 border">S. Vigneshwar</td>
-<td class="px-4 py-2 border">II IT</td>
-<td class="px-4 py-2 border">Internship (offline)</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Bluestock Fintech</td>
+
+    <td class="px-4 py-2 border">
+        <?= $sno++ ?>
+    </td>
+
+    <td class="px-4 py-2 border">
+        <?= htmlspecialchars($row['date_duration']) ?>
+    </td>
+
+    <td class="px-4 py-2 border">
+        <?= htmlspecialchars($row['student']) ?>
+    </td>
+
+    <td class="px-4 py-2 border">
+        <?= htmlspecialchars($row['year_department']) ?>
+    </td>
+
+    <td class="px-4 py-2 border">
+        <?= htmlspecialchars($row['activity_event']) ?>
+    </td>
+
+    <td class="px-4 py-2 border">
+        <?= htmlspecialchars($row['achievement_role']) ?>
+    </td>
+
+    <td class="px-4 py-2 border">
+        <?= htmlspecialchars($row['organization_venue']) ?>
+    </td>
+
 </tr>
 
-<!-- III Year -->
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">7</td>
-<td class="px-4 py-2 border">25/10/2024</td>
-<td class="px-4 py-2 border">A. Suryaprakash</td>
-<td class="px-4 py-2 border">III IT</td>
-<td class="px-4 py-2 border">Data Science Foundation; Android App Development</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Great Learning</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">8</td>
-<td class="px-4 py-2 border">02/01/2025–05/02/2025</td>
-<td class="px-4 py-2 border">K. Pravin</td>
-<td class="px-4 py-2 border">III IT</td>
-<td class="px-4 py-2 border">Data Visualization Internship (online)</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Forage</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">9</td>
-<td class="px-4 py-2 border">03/02/2025–15/02/2025</td>
-<td class="px-4 py-2 border">M. Sarvaji</td>
-<td class="px-4 py-2 border">III IT</td>
-<td class="px-4 py-2 border">Internship (offline)</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Blankspace Technologies LLP, Bengaluru</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">10</td>
-<td class="px-4 py-2 border">03/03/2025–05/03/2025</td>
-<td class="px-4 py-2 border">M. Sarvaji</td>
-<td class="px-4 py-2 border">III IT</td>
-<td class="px-4 py-2 border">Git & GitHub Bootcamp</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Lets Upgrade</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">11</td>
-<td class="px-4 py-2 border">07/03/2025</td>
-<td class="px-4 py-2 border">M. Sarvaji</td>
-<td class="px-4 py-2 border">III IT</td>
-<td class="px-4 py-2 border">Quantitative Research Job Simulation</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Forage</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">12</td>
-<td class="px-4 py-2 border">02/02/2025</td>
-<td class="px-4 py-2 border">P. Swathi</td>
-<td class="px-4 py-2 border">III IT</td>
-<td class="px-4 py-2 border">Machine Learning Online Course</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Fair Forward</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">13</td>
-<td class="px-4 py-2 border">05/11/2024</td>
-<td class="px-4 py-2 border">R. Yohith Kumar</td>
-<td class="px-4 py-2 border">III IT</td>
-<td class="px-4 py-2 border">Artificial Intelligence</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">NoviTech R&D Pvt. Ltd.</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">14</td>
-<td class="px-4 py-2 border">02/02/2025</td>
-<td class="px-4 py-2 border">S. Yamini</td>
-<td class="px-4 py-2 border">III IT</td>
-<td class="px-4 py-2 border">AI for Beginners; Selling Online</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">HP Life</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">15</td>
-<td class="px-4 py-2 border">03/02/2025</td>
-<td class="px-4 py-2 border">Sathya Seelan</td>
-<td class="px-4 py-2 border">III IT</td>
-<td class="px-4 py-2 border">Bootcamp</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Lets Upgrade</td>
-</tr>
-<tr class="hover:bg-black hover:bg-opacity-10 transition-colors">
-<td class="px-4 py-2 border">16</td>
-<td class="px-4 py-2 border">15/03/2025–16/03/2025</td>
-<td class="px-4 py-2 border">Sathya Seelan M</td>
-<td class="px-4 py-2 border">III IT</td>
-<td class="px-4 py-2 border">Netflix clone using HTML & CSS (online)</td>
-<td class="px-4 py-2 border">Completed</td>
-<td class="px-4 py-2 border">Lets Upgrade</td>
-</tr>
+<?php
+}
+?>
+
 </tbody>
 </table>
 </div>
