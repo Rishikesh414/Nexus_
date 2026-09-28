@@ -2,92 +2,19 @@
 
 include "../server/config/db.php";
 
-/* =========================================================
-   YEAR FILTER
-   ========================================================= */
-
-$allowed_years = ['2024', '2025', '2026'];
-
-$selected_year = $_GET['year'] ?? '2026';
-
-if (!in_array($selected_year, $allowed_years, true)) {
-    $selected_year = '2026';
-}
-
-/*
- * We search the actual date_duration field.
- * Example:
- * 21-09-2025
- * 17-01-2026
- * 05-01-2026
- *
- * LIKE %2025% / %2026% matches the year appearing
- * inside the actual date/duration text.
- */
-$year_search = '%' . $selected_year . '%';
-
-
-/* =========================================================
-   HELPER FUNCTION
-   Used only for tables which contain date_duration
-   ========================================================= */
-
-function getYearWiseData($conn, $table, $year_search)
-{
-    $allowed_tables = [
-        'academic_achievements',
-        'department_activities',
-        'hackathons_expos_conferences',
-        'sports_achievements'
-    ];
-
-    if (!in_array($table, $allowed_tables, true)) {
-        return false;
-    }
-
-    $sql = "
-        SELECT *
-        FROM `$table`
-        WHERE date_duration LIKE ?
-        ORDER BY id ASC
-    ";
-
-    $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        die(
-            ucfirst($table) .
-            " Query preparation failed: " .
-            $conn->error
-        );
-    }
-
-    $stmt->bind_param("s", $year_search);
-
-    if (!$stmt->execute()) {
-        die(
-            ucfirst($table) .
-            " Query failed: " .
-            $stmt->error
-        );
-    }
-
-    return $stmt->get_result();
-}
-
 
 /* =========================================================
    1. ACADEMIC / TECHNICAL ACHIEVEMENTS
    ========================================================= */
 
-$academic_result = getYearWiseData(
-    $conn,
-    'academic_achievements',
-    $year_search
-);
+$academic_result = $conn->query("
+    SELECT *
+    FROM academic_achievements
+    ORDER BY id ASC
+");
 
-if ($academic_result === false) {
-    die("Academic Query failed.");
+if (!$academic_result) {
+    die("Academic Query failed: " . $conn->error);
 }
 
 
@@ -95,14 +22,14 @@ if ($academic_result === false) {
    2. DEPARTMENT ACTIVITIES
    ========================================================= */
 
-$department_result = getYearWiseData(
-    $conn,
-    'department_activities',
-    $year_search
-);
+$department_result = $conn->query("
+    SELECT *
+    FROM department_activities
+    ORDER BY id ASC
+");
 
-if ($department_result === false) {
-    die("Department Query failed.");
+if (!$department_result) {
+    die("Department Query failed: " . $conn->error);
 }
 
 
@@ -110,14 +37,14 @@ if ($department_result === false) {
    3. HACKATHONS / EXPOS / CONFERENCES
    ========================================================= */
 
-$hackathon_result = getYearWiseData(
-    $conn,
-    'hackathons_expos_conferences',
-    $year_search
-);
+$hackathon_result = $conn->query("
+    SELECT *
+    FROM hackathons_expos_conferences
+    ORDER BY id ASC
+");
 
-if ($hackathon_result === false) {
-    die("Hackathon Query failed.");
+if (!$hackathon_result) {
+    die("Hackathon Query failed: " . $conn->error);
 }
 
 
@@ -125,35 +52,19 @@ if ($hackathon_result === false) {
    4. SPORTS ACHIEVEMENTS
    ========================================================= */
 
-$sports_result = getYearWiseData(
-    $conn,
-    'sports_achievements',
-    $year_search
-);
+$sports_result = $conn->query("
+    SELECT *
+    FROM sports_achievements
+    ORDER BY id ASC
+");
 
-if ($sports_result === false) {
-    die("Sports Query failed.");
+if (!$sports_result) {
+    die("Sports Query failed: " . $conn->error);
 }
 
 
 /* =========================================================
    5. INTERNSHIPS & COMPANY PROJECTS
-   =========================================================
-
-   IMPORTANT:
-   internships_company_projects does NOT have date_duration.
-
-   Columns available:
-   company_organization
-   project_role
-   students
-   staff_mentor
-   duration_notes
-   created_at
-   academic_year
-
-   Therefore we DO NOT use created_at as the internship year.
-   The existing internship records are displayed separately.
    ========================================================= */
 
 $internship_result = $conn->query("
@@ -163,10 +74,7 @@ $internship_result = $conn->query("
 ");
 
 if (!$internship_result) {
-    die(
-        "Internship Query failed: " .
-        $conn->error
-    );
+    die("Internship Query failed: " . $conn->error);
 }
 
 ?>
@@ -176,18 +84,18 @@ if (!$internship_result) {
 
 <head>
 
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
 
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1"
-  />
+  >
 
   <title>Achievements | NEXUS</title>
 
 
   <!-- =====================================================
-       AOS FOR SCROLL ANIMATIONS
+       AOS
        ===================================================== -->
 
   <link
@@ -216,15 +124,19 @@ if (!$internship_result) {
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-  />
+  >
 
 
   <!-- =====================================================
-       TAILWIND CSS
+       TAILWIND
        ===================================================== -->
 
   <script src="https://cdn.tailwindcss.com"></script>
 
+
+  <!-- =====================================================
+       CUSTOM CSS
+       ===================================================== -->
 
   <style>
 
@@ -244,123 +156,14 @@ if (!$internship_result) {
 
     .animate-float {
 
-      animation: float 4s ease-in-out infinite;
+      animation:
+        float 4s ease-in-out infinite;
 
     }
 
 
     /* =====================================================
-       YEAR BUTTONS
-       ===================================================== */
-
-    .year-filter-container {
-
-      display: flex;
-
-      justify-content: center;
-
-      align-items: center;
-
-      gap: 16px;
-
-      flex-wrap: wrap;
-
-      margin-bottom: 45px;
-
-    }
-
-
-    .year-btn {
-
-      display: inline-flex;
-
-      align-items: center;
-
-      justify-content: center;
-
-      min-width: 110px;
-
-      padding: 12px 28px;
-
-      border-radius: 999px;
-
-      border: 1px solid rgba(168, 85, 247, 0.6);
-
-      background: rgba(31, 41, 55, 0.9);
-
-      color: #e9d5ff;
-
-      font-size: 17px;
-
-      font-weight: 700;
-
-      text-decoration: none;
-
-      transition: all 0.3s ease;
-
-      box-shadow:
-        0 5px 15px rgba(0, 0, 0, 0.25);
-
-    }
-
-
-    .year-btn:hover {
-
-      transform: translateY(-4px) scale(1.04);
-
-      background:
-        linear-gradient(
-          135deg,
-          #581c87,
-          #7e22ce
-        );
-
-      color: white;
-
-      border-color: #c084fc;
-
-      box-shadow:
-        0 10px 25px rgba(147, 51, 234, 0.45);
-
-    }
-
-
-    .year-btn.active {
-
-      background:
-        linear-gradient(
-          135deg,
-          #7e22ce,
-          #9333ea
-        );
-
-      color: white;
-
-      border-color: #d8b4fe;
-
-      box-shadow:
-        0 0 20px rgba(168, 85, 247, 0.55);
-
-    }
-
-
-    .selected-year-text {
-
-      text-align: center;
-
-      color: #d8b4fe;
-
-      font-size: 18px;
-
-      margin-top: -25px;
-
-      margin-bottom: 35px;
-
-    }
-
-
-    /* =====================================================
-       FLIP CARD STYLES
+       FLIP CARD
        ===================================================== */
 
     .flip-card {
@@ -382,16 +185,19 @@ if (!$internship_result) {
 
       height: 100%;
 
-      transition: transform 0.8s;
+      transition:
+        transform 0.8s;
 
       transform-style: preserve-3d;
 
     }
 
 
-    .flip-card:hover .flip-card-inner {
+    .flip-card:hover
+    .flip-card-inner {
 
-      transform: rotateY(180deg);
+      transform:
+        rotateY(180deg);
 
     }
 
@@ -409,9 +215,11 @@ if (!$internship_result) {
 
       overflow: hidden;
 
-      -webkit-backface-visibility: hidden;
+      -webkit-backface-visibility:
+        hidden;
 
-      backface-visibility: hidden;
+      backface-visibility:
+        hidden;
 
     }
 
@@ -436,7 +244,8 @@ if (!$internship_result) {
           rgba(20, 0, 50, 0.95)
         );
 
-      transform: rotateY(180deg);
+      transform:
+        rotateY(180deg);
 
       display: flex;
 
@@ -475,9 +284,11 @@ if (!$internship_result) {
         0 0 8px purple,
         0 0 15px cyan;
 
-      padding: 0 0.5rem;
+      padding:
+        0 0.5rem;
 
-      word-break: break-word;
+      word-break:
+        break-word;
 
     }
 
@@ -488,30 +299,34 @@ if (!$internship_result) {
 
       color: #eee;
 
-      margin: 0.2rem 0;
+      margin:
+        0.2rem 0;
 
     }
 
 
     /* =====================================================
-       CARD CONTAINER HOVER EFFECT
+       TILT CARD
        ===================================================== */
 
     .tilt-card {
 
-      background-color: #1f2937;
+      background-color:
+        #1f2937;
 
       transition:
         transform 0.3s ease,
         background-color 0.3s ease,
         box-shadow 0.3s ease;
 
-      border-radius: 0.75rem;
+      border-radius:
+        0.75rem;
 
       overflow: hidden;
 
       box-shadow:
-        0 2px 10px rgba(0, 0, 0, 0.3);
+        0 2px 10px
+        rgba(0, 0, 0, 0.3);
 
       cursor: pointer;
 
@@ -524,7 +339,8 @@ if (!$internship_result) {
         translateY(-12px)
         scale(1.05);
 
-      background-color: #404246ff;
+      background-color:
+        #404246ff;
 
       box-shadow:
         0 15px 25px
@@ -536,45 +352,84 @@ if (!$internship_result) {
 
 
     /* =====================================================
-       TABLE RESPONSIVE TEXT
+       YEAR BUTTONS
        ===================================================== */
 
-    table {
+    .year-buttons {
 
-      font-size: 14px;
+      display: flex;
+
+      justify-content: center;
+
+      align-items: center;
+
+      gap: 15px;
+
+      flex-wrap: wrap;
+
+      margin-bottom: 40px;
 
     }
 
 
-    th {
+    .year-btn {
+
+      display: inline-block;
+
+      padding:
+        10px 28px;
+
+      border-radius:
+        999px;
+
+      border:
+        2px solid
+        #9333ea;
 
       color: white;
 
-      font-weight: 700;
+      background:
+        rgba(88, 28, 135, 0.75);
+
+      font-weight:
+        600;
+
+      text-decoration:
+        none;
+
+      transition:
+        all 0.3s ease;
 
     }
 
 
-    td {
+    .year-btn:hover {
 
-      color: #f3f4f6;
+      background:
+        #9333ea;
 
-      vertical-align: top;
+      transform:
+        translateY(-2px);
+
+      box-shadow:
+        0 0 15px
+        rgba(147, 51, 234, 0.7);
 
     }
 
 
-    /* =====================================================
-       NO DATA MESSAGE
-       ===================================================== */
+    .year-btn.active {
 
-    .no-data {
+      background:
+        linear-gradient(
+          90deg,
+          #6b21a8,
+          #9333ea
+        );
 
-      color: #ddd6fe;
-
-      padding: 20px !important;
-
-      font-style: italic;
+      box-shadow:
+        0 0 18px
+        rgba(147, 51, 234, 0.8);
 
     }
 
@@ -583,16 +438,23 @@ if (!$internship_result) {
 </head>
 
 
-<body class="bg-gray-900 text-white relative">
+<body
+  class="bg-gray-900 text-white relative"
+>
 
 
   <!-- =====================================================
        3D BACKGROUND
        ===================================================== -->
 
-  <div class="fixed inset-0 z-0 pointer-events-none">
+  <div
+    class="fixed inset-0 z-0
+    pointer-events-none"
+  >
 
-    <?php include("includes/3d.php"); ?>
+    <?php
+      include("includes/3d.php");
+    ?>
 
   </div>
 
@@ -601,14 +463,18 @@ if (!$internship_result) {
        MAIN CONTENT
        ===================================================== -->
 
-  <div class="relative z-10">
+  <div
+    class="relative z-10"
+  >
 
 
     <!-- ===================================================
          NAVBAR
          =================================================== -->
 
-    <?php include("includes/navbar.php"); ?>
+    <?php
+      include("includes/navbar.php");
+    ?>
 
 
     <!-- ===================================================
@@ -616,38 +482,67 @@ if (!$internship_result) {
          =================================================== -->
 
     <section
-      class="text-center py-16 px-6"
+      class="text-center
+      py-16 px-6"
     >
 
       <div
-        class="inline-flex items-center justify-center w-28 h-28 mb-6 mx-auto"
+        class="
+        inline-flex
+        items-center
+        justify-center
+        w-28 h-28
+        mb-6
+        mx-auto
+        "
       >
 
         <img
           src="./img/ne.png"
           alt=""
-          class="rounded-2xl animate-float"
-        />
+          class="
+          rounded-2xl
+          animate-float
+          "
+        >
 
       </div>
 
 
       <h1
-        class="text-5xl md:text-6xl font-bold mb-4
-        bg-clip-text text-transparent
-        bg-gradient-to-r from-blue-300 to-purple-300"
+        class="
+        text-5xl
+        md:text-6xl
+        font-bold
+        mb-4
+        bg-clip-text
+        text-transparent
+        bg-gradient-to-r
+        from-blue-300
+        to-purple-300
+        "
       >
+
         NEXUS
+
       </h1>
 
 
       <p
-        class="text-xl md:text-2xl
-        max-w-3xl mx-auto
-        leading-relaxed text-gray-200"
+        class="
+        text-xl
+        md:text-2xl
+        max-w-3xl
+        mx-auto
+        leading-relaxed
+        text-gray-200
+        "
       >
-        Connecting minds, fostering innovation,
+
+        Connecting minds,
+        fostering innovation,
         and building the future together
+
       </p>
 
     </section>
@@ -658,59 +553,66 @@ if (!$internship_result) {
          =================================================== -->
 
     <section
-      class="max-w-7xl mx-auto px-6 py-12"
+      class="
+      max-w-7xl
+      mx-auto
+      px-6
+      py-12
+      "
     >
 
 
       <h2
-        class="text-3xl font-bold text-center mb-8 text-purple-300"
+        class="
+        text-3xl
+        font-bold
+        text-center
+        mb-8
+        text-purple-300
+        "
       >
+
         Achievements
+
       </h2>
 
 
       <!-- =================================================
-           YEAR FILTER BUTTONS
+           YEAR BUTTONS
            ================================================= -->
 
-      <div class="year-filter-container">
+      <div class="year-buttons">
 
         <a
-          href="?year=2024"
-          class="year-btn <?= $selected_year === '2024' ? 'active' : '' ?>"
+          href="achievements.php?year=2024"
+          class="year-btn"
         >
+
           2024
+
         </a>
 
 
         <a
-          href="?year=2025"
-          class="year-btn <?= $selected_year === '2025' ? 'active' : '' ?>"
+          href="achievements.php?year=2025"
+          class="year-btn"
         >
+
           2025
+
         </a>
 
 
         <a
-          href="?year=2026"
-          class="year-btn <?= $selected_year === '2026' ? 'active' : '' ?>"
+          href="achievements.php?year=2026"
+          class="year-btn"
         >
+
           2026
+
         </a>
 
       </div>
-
-
-      <p class="selected-year-text">
-
-        Showing achievements and activities for
-
-        <strong>
-          <?= htmlspecialchars($selected_year) ?>
-        </strong>
-
-      </p>
-
 
 
       <!-- =================================================
@@ -720,19 +622,35 @@ if (!$internship_result) {
       <div>
 
         <h2
-          class="text-xl font-semibold mt-6 mb-2"
+          class="
+          text-xl
+          font-semibold
+          mt-6
+          mb-2
+          "
         >
+
           1. Academic / Technical Achievements
+
         </h2>
 
 
         <div
-          class="overflow-x-auto mb-6"
+          class="
+          overflow-x-auto
+          mb-6
+          "
         >
 
           <table
-            class="min-w-full border border-gray-300
-            bg-gradient-to-r from-purple-900 to-purple-700"
+            class="
+            min-w-full
+            border
+            border-gray-300
+            bg-gradient-to-r
+            from-purple-900
+            to-purple-700
+            "
           >
 
             <thead>
@@ -778,15 +696,23 @@ if (!$internship_result) {
 
               $sno = 1;
 
-              if ($academic_result->num_rows > 0) {
+              if (
+                $academic_result->num_rows > 0
+              ) {
 
-                  while ($row = $academic_result->fetch_assoc()) {
+                while (
+                  $row =
+                  $academic_result->fetch_assoc()
+                ) {
 
               ?>
 
               <tr
-                class="hover:bg-black hover:bg-opacity-10
-                transition-colors"
+                class="
+                hover:bg-black
+                hover:bg-opacity-10
+                transition-colors
+                "
               >
 
                 <td class="px-4 py-2 border">
@@ -794,34 +720,46 @@ if (!$internship_result) {
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['date_duration'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['date_duration']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['student'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['student']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['year_department'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['year_department']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['activity_event'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['activity_event']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['achievement_role'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['achievement_role']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['organization_venue'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['organization_venue']
+                  ) ?>
                 </td>
 
               </tr>
 
               <?php
 
-                  }
+                }
 
               } else {
 
@@ -831,10 +769,16 @@ if (!$internship_result) {
 
                 <td
                   colspan="7"
-                  class="px-4 py-4 border text-center no-data"
+                  class="
+                  px-4
+                  py-4
+                  border
+                  text-center
+                  "
                 >
-                  No academic achievements available for
-                  <?= htmlspecialchars($selected_year) ?>.
+
+                  No academic achievements available.
+
                 </td>
 
               </tr>
@@ -852,25 +796,40 @@ if (!$internship_result) {
         </div>
 
 
-
         <!-- =================================================
              2. DEPARTMENT ACTIVITIES
              ================================================= -->
 
         <h2
-          class="text-xl font-semibold mt-6 mb-2"
+          class="
+          text-xl
+          font-semibold
+          mt-6
+          mb-2
+          "
         >
+
           2. Department Activities
+
         </h2>
 
 
         <div
-          class="overflow-x-auto mb-6"
+          class="
+          overflow-x-auto
+          mb-6
+          "
         >
 
           <table
-            class="min-w-full border border-gray-300
-            bg-gradient-to-r from-purple-900 to-purple-700"
+            class="
+            min-w-full
+            border
+            border-gray-300
+            bg-gradient-to-r
+            from-purple-900
+            to-purple-700
+            "
           >
 
             <thead>
@@ -908,15 +867,23 @@ if (!$internship_result) {
 
               $department_sno = 1;
 
-              if ($department_result->num_rows > 0) {
+              if (
+                $department_result->num_rows > 0
+              ) {
 
-                  while ($row = $department_result->fetch_assoc()) {
+                while (
+                  $row =
+                  $department_result->fetch_assoc()
+                ) {
 
               ?>
 
               <tr
-                class="hover:bg-black hover:bg-opacity-10
-                transition-colors"
+                class="
+                hover:bg-black
+                hover:bg-opacity-10
+                transition-colors
+                "
               >
 
                 <td class="px-4 py-2 border">
@@ -924,26 +891,34 @@ if (!$internship_result) {
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['date_duration'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['date_duration']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['activity_event'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['activity_event']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['department_joint'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['department_joint']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['guest_resource'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['guest_resource']
+                  ) ?>
                 </td>
 
               </tr>
 
               <?php
 
-                  }
+                }
 
               } else {
 
@@ -953,10 +928,16 @@ if (!$internship_result) {
 
                 <td
                   colspan="5"
-                  class="px-4 py-4 border text-center no-data"
+                  class="
+                  px-4
+                  py-4
+                  border
+                  text-center
+                  "
                 >
-                  No department activities available for
-                  <?= htmlspecialchars($selected_year) ?>.
+
+                  No department activities available.
+
                 </td>
 
               </tr>
@@ -974,25 +955,40 @@ if (!$internship_result) {
         </div>
 
 
-
         <!-- =================================================
              3. HACKATHONS / EXPOS / CONFERENCES
              ================================================= -->
 
         <h2
-          class="text-xl font-semibold mt-6 mb-2"
+          class="
+          text-xl
+          font-semibold
+          mt-6
+          mb-2
+          "
         >
+
           3. Hackathons, Expos, Conferences
+
         </h2>
 
 
         <div
-          class="overflow-x-auto mb-6"
+          class="
+          overflow-x-auto
+          mb-6
+          "
         >
 
           <table
-            class="min-w-full border border-gray-300
-            bg-gradient-to-r from-purple-900 to-purple-700"
+            class="
+            min-w-full
+            border
+            border-gray-300
+            bg-gradient-to-r
+            from-purple-900
+            to-purple-700
+            "
           >
 
             <thead>
@@ -1030,15 +1026,23 @@ if (!$internship_result) {
 
               $hackathon_sno = 1;
 
-              if ($hackathon_result->num_rows > 0) {
+              if (
+                $hackathon_result->num_rows > 0
+              ) {
 
-                  while ($row = $hackathon_result->fetch_assoc()) {
+                while (
+                  $row =
+                  $hackathon_result->fetch_assoc()
+                ) {
 
               ?>
 
               <tr
-                class="hover:bg-black hover:bg-opacity-10
-                transition-colors"
+                class="
+                hover:bg-black
+                hover:bg-opacity-10
+                transition-colors
+                "
               >
 
                 <td class="px-4 py-2 border">
@@ -1046,26 +1050,34 @@ if (!$internship_result) {
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['date_duration'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['date_duration']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['event'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['event']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['students'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['students']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['venue_organization'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['venue_organization']
+                  ) ?>
                 </td>
 
               </tr>
 
               <?php
 
-                  }
+                }
 
               } else {
 
@@ -1075,10 +1087,16 @@ if (!$internship_result) {
 
                 <td
                   colspan="5"
-                  class="px-4 py-4 border text-center no-data"
+                  class="
+                  px-4
+                  py-4
+                  border
+                  text-center
+                  "
                 >
-                  No hackathons, expos or conferences available
-                  for <?= htmlspecialchars($selected_year) ?>.
+
+                  No hackathons, expos or conferences available.
+
                 </td>
 
               </tr>
@@ -1096,25 +1114,40 @@ if (!$internship_result) {
         </div>
 
 
-
         <!-- =================================================
              4. SPORTS ACHIEVEMENTS
              ================================================= -->
 
         <h2
-          class="text-xl font-semibold mt-6 mb-2"
+          class="
+          text-xl
+          font-semibold
+          mt-6
+          mb-2
+          "
         >
+
           4. Sports Achievements
+
         </h2>
 
 
         <div
-          class="overflow-x-auto mb-6"
+          class="
+          overflow-x-auto
+          mb-6
+          "
         >
 
           <table
-            class="min-w-full border border-gray-300
-            bg-gradient-to-r from-purple-900 to-purple-700"
+            class="
+            min-w-full
+            border
+            border-gray-300
+            bg-gradient-to-r
+            from-purple-900
+            to-purple-700
+            "
           >
 
             <thead>
@@ -1152,15 +1185,23 @@ if (!$internship_result) {
 
               $sports_sno = 1;
 
-              if ($sports_result->num_rows > 0) {
+              if (
+                $sports_result->num_rows > 0
+              ) {
 
-                  while ($row = $sports_result->fetch_assoc()) {
+                while (
+                  $row =
+                  $sports_result->fetch_assoc()
+                ) {
 
               ?>
 
               <tr
-                class="hover:bg-black hover:bg-opacity-10
-                transition-colors"
+                class="
+                hover:bg-black
+                hover:bg-opacity-10
+                transition-colors
+                "
               >
 
                 <td class="px-4 py-2 border">
@@ -1168,26 +1209,34 @@ if (!$internship_result) {
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['date_duration'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['date_duration']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['sport_event'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['sport_event']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['students'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['students']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars($row['achievement_position'] ?? '') ?>
+                  <?= htmlspecialchars(
+                    $row['achievement_position']
+                  ) ?>
                 </td>
 
               </tr>
 
               <?php
 
-                  }
+                }
 
               } else {
 
@@ -1197,10 +1246,16 @@ if (!$internship_result) {
 
                 <td
                   colspan="5"
-                  class="px-4 py-4 border text-center no-data"
+                  class="
+                  px-4
+                  py-4
+                  border
+                  text-center
+                  "
                 >
-                  No sports achievements available for
-                  <?= htmlspecialchars($selected_year) ?>.
+
+                  No sports achievements available.
+
                 </td>
 
               </tr>
@@ -1218,25 +1273,40 @@ if (!$internship_result) {
         </div>
 
 
-
         <!-- =================================================
-             5. INTERNSHIPS & COMPANY PROJECTS
+             6. INTERNSHIPS & COMPANY PROJECTS
              ================================================= -->
 
         <h2
-          class="text-xl font-semibold mt-6 mb-2"
+          class="
+          text-xl
+          font-semibold
+          mt-6
+          mb-2
+          "
         >
-          5. Internships & Company Projects
+
+          6. Internships & Company Projects
+
         </h2>
 
 
         <div
-          class="overflow-x-auto mb-6"
+          class="
+          overflow-x-auto
+          mb-6
+          "
         >
 
           <table
-            class="min-w-full border border-gray-300
-            bg-gradient-to-r from-purple-900 to-purple-700"
+            class="
+            min-w-full
+            border
+            border-gray-300
+            bg-gradient-to-r
+            from-purple-900
+            to-purple-700
+            "
           >
 
             <thead>
@@ -1276,23 +1346,25 @@ if (!$internship_result) {
 
               <?php
 
-              /*
-               * Internship table has no actual date field.
-               * Therefore existing records are displayed without
-               * pretending that created_at represents the internship year.
-               */
-
               $internship_sno = 1;
 
-              if ($internship_result->num_rows > 0) {
+              if (
+                $internship_result->num_rows > 0
+              ) {
 
-                  while ($row = $internship_result->fetch_assoc()) {
+                while (
+                  $row =
+                  $internship_result->fetch_assoc()
+                ) {
 
               ?>
 
               <tr
-                class="hover:bg-black hover:bg-opacity-10
-                transition-colors"
+                class="
+                hover:bg-black
+                hover:bg-opacity-10
+                transition-colors
+                "
               >
 
                 <td class="px-4 py-2 border">
@@ -1301,39 +1373,39 @@ if (!$internship_result) {
 
                 <td class="px-4 py-2 border">
                   <?= htmlspecialchars(
-                        $row['company_organization'] ?? ''
-                      ) ?>
+                    $row['company_organization']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
                   <?= htmlspecialchars(
-                        $row['project_role'] ?? ''
-                      ) ?>
+                    $row['project_role']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
                   <?= htmlspecialchars(
-                        $row['students'] ?? ''
-                      ) ?>
+                    $row['students']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
                   <?= htmlspecialchars(
-                        $row['staff_mentor'] ?? ''
-                      ) ?>
+                    $row['staff_mentor']
+                  ) ?>
                 </td>
 
                 <td class="px-4 py-2 border">
                   <?= htmlspecialchars(
-                        $row['duration_notes'] ?? ''
-                      ) ?>
+                    $row['duration_notes']
+                  ) ?>
                 </td>
 
               </tr>
 
               <?php
 
-                  }
+                }
 
               } else {
 
@@ -1343,9 +1415,16 @@ if (!$internship_result) {
 
                 <td
                   colspan="6"
-                  class="px-4 py-4 border text-center no-data"
+                  class="
+                  px-4
+                  py-4
+                  border
+                  text-center
+                  "
                 >
+
                   No internships or company projects available.
+
                 </td>
 
               </tr>
@@ -1367,7 +1446,6 @@ if (!$internship_result) {
 
     </section>
 
-
   </div>
 
 
@@ -1381,15 +1459,21 @@ if (!$internship_result) {
 
       duration: 700,
 
-      easing: 'ease-in-out',
+      easing:
+        'ease-in-out',
 
-      mirror: false
+      mirror:
+        false
 
     });
 
 
     VanillaTilt.init(
-      document.querySelectorAll(".tilt-card"),
+
+      document.querySelectorAll(
+        ".tilt-card"
+      ),
+
       {
 
         max: 15,
@@ -1398,9 +1482,10 @@ if (!$internship_result) {
 
         glare: true,
 
-        "max-glare": 0.2,
+        "max-glare": 0.2
 
       }
+
     );
 
   </script>

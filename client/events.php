@@ -1,6 +1,6 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -150,47 +150,28 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
         <?php
         $upcoming_events = [
-           [
-            "title" => "State-level Hands-on Workshop on “Deploying the Applications
-on AWS cloud”",
-            "description" => "This workshop not only boosted participants' technical knowhow but also helped establish professional connections,
-fulfilling the objective of knowledge dissemination and
-academic outreach beyond institutional boundaries",
-            "date" => "6th Septemter (Saturday)",
-            "image" => "./assets/img/aws.png",
-            "badge" => "Workshop",
-            'link'=>'workshop.php',
-             "id" =>1
-           ],
-          [
-            "title" => "Code Crafters Club – 4-Month Association Activities (Team-Based)",
-            "description" => "The team with the highest overall score will be declared “Best Code Crafters Team of the Year.",
-            "date" => "Duration 4-Month ",
-            "image" => "./assets/img/C.png",
-            "badge" => "Association Activities",
-           
-          ],
-          [
-            "title" => "The Full Stack Approach to SAP Integration and Customization",
-            "description" => "To provide students with real-world insights into cyber forensics
-and incident response mechanisms, including investigation
-methodologies, forensic tools, threat detection, evidence
-preservation, and legal aspects related to cybersecurity breaches.",
-            "date" => "23.08.2025 & Saturday -12:00pm -1:30pm",
-            "image" => "./assets/img/FSapp.png",
-            "badge" => "Tech Talk"
-          ],
-          [
-            "title" => "Build your TechStack: The Digital Toolbox for Future Engineers",
-            "description" => " To guide students in choosing the right combination of
-technologies and tools for different domains like web
-development, mobile apps, data science, AI/ML, and DevOps..",
-            "date" => "13.09.2025 & Saturday",
-            "image" => "./assets/img/Fe.gif",
-            "badge" => "Tech Talk"
-          ],
-         
-        ];
+    [
+        "title" => "Upcoming Event",
+        "description" => "Event details will be updated soon.",
+        "date" => "Coming Soon",
+        "image" => "./assets/img/placeholder.jpg",
+        "badge" => "Coming Soon"
+    ],
+    [
+        "title" => "Upcoming Event",
+        "description" => "Event details will be updated soon.",
+        "date" => "Coming Soon",
+        "image" => "./assets/img/placeholder.jpg",
+        "badge" => "Coming Soon"
+    ],
+    [
+        "title" => "Upcoming Event",
+        "description" => "Event details will be updated soon.",
+        "date" => "Coming Soon",
+        "image" => "./assets/img/placeholder.jpg",
+        "badge" => "Coming Soon"
+    ]
+];
 
         foreach ($upcoming_events as $index => $event) {
           $delay = $index * 180; // slightly slower stagger
@@ -224,36 +205,67 @@ development, mobile apps, data science, AI/ML, and DevOps..",
       <h2 class="text-3xl font-bold text-center mb-10 text-purple-300">Past Events</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         <?php
-        $gallery = [
-          [
-            "title" => "Text Web Social Media Analytics",
-            "guest" => "Dr. R. Lokesh Kumar (VIT Chennai)",
-            "date" => "25 Oct 2024",
-            "image" => "../frontend/img/text_social_media/51.jpeg",
-            "badge" => "Guest Lecture"
-          ],
-          [
-            "title" => "Laravel – Building Modern Web Applications",
-            "guest" => "Mr. K. Anandraj, CEO, TM Innovations",
-            "date" => "08 Feb 2025 to 14 Feb 2025",
-            "image" => "../frontend/img/laravel.jpeg",
-            "badge" => "Workshop"
-          ],
-          [
-            "title" => "Django and its Frameworks",
-            "guest" => "Mr. K. Anandraj, CEO, TM Innovations",
-            "date" => "15 Feb 2025 to 20 Feb 2025",
-            "image" => "../frontend/img/workshop_django/24.jpeg",
-            "badge" => "Workshop"
-          ],
-          [
-            "title" => "Mastering the job hunt – interview preparation for professional careers",
-            "guest" => "Mr. Arasakumar S, Senior Software Engineer, Infosys Pvt. Ltd.",
-            "date" => "09 Nov 2024",
-            "image" => "../frontend/img/2024_inaug/16.jpeg",
-            "badge" => "Career Talk"
-          ],
-        ];
+       $gallery = [
+    [
+        "title" => "Text Web Social Media Analytics",
+        "guest" => "Dr. R. Lokesh Kumar (VIT Chennai)",
+        "date" => "25 Oct 2024",
+        "image" => "../frontend/img/text_social_media/51.jpeg",
+        "badge" => "Guest Lecture"
+    ],
+    [
+        "title" => "Laravel – Building Modern Web Applications",
+        "guest" => "Mr. K. Anandraj, CEO, TM Innovations",
+        "date" => "08 Feb 2025 to 14 Feb 2025",
+        "image" => "../frontend/img/laravel.jpeg",
+        "badge" => "Workshop"
+    ],
+    [
+        "title" => "Django and its Frameworks",
+        "guest" => "Mr. K. Anandraj, CEO, TM Innovations",
+        "date" => "15 Feb 2025 to 20 Feb 2025",
+        "image" => "../frontend/img/workshop_django/24.jpeg",
+        "badge" => "Workshop"
+    ],
+    [
+        "title" => "Mastering the job hunt – interview preparation for professional careers",
+        "guest" => "Mr. Arasakumar S, Senior Software Engineer, Infosys Pvt. Ltd.",
+        "date" => "09 Nov 2024",
+        "image" => "../frontend/img/2024_inaug/16.jpeg",
+        "badge" => "Career Talk"
+    ],
+
+    // Old Upcoming Events moved to Past Events
+
+    [
+        "title" => "State-level Hands-on Workshop on “Deploying the Applications on AWS cloud”",
+        "guest" => "Association Event",
+        "date" => "6th September",
+        "image" => "./assets/img/aws.png",
+        "badge" => "Workshop"
+    ],
+    [
+        "title" => "Code Crafters Club – 4-Month Association Activities (Team-Based)",
+        "guest" => "Association Event",
+        "date" => "Duration 4-Month",
+        "image" => "./assets/img/C.png",
+        "badge" => "Association Activities"
+    ],
+    [
+        "title" => "The Full Stack Approach to SAP Integration and Customization",
+        "guest" => "Association Event",
+        "date" => "23.08.2025 & Saturday - 12:00pm - 1:30pm",
+        "image" => "./assets/img/FSapp.png",
+        "badge" => "Tech Talk"
+    ],
+    [
+        "title" => "Build your TechStack: The Digital Toolbox for Future Engineers",
+        "guest" => "Association Event",
+        "date" => "13.09.2025 & Saturday",
+        "image" => "./assets/img/Fe.gif",
+        "badge" => "Tech Talk"
+    ]
+];
 
         foreach ($gallery as $index => $event) {
           $delay = $index * 150; // stagger delay 150ms

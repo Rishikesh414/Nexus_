@@ -140,7 +140,75 @@
           "../frontend/img/sports/72.jpg"
         ]
       ],
-     
+      [
+    "title" => "Conference",
+    "images" => [
+        "../frontend/img/conference/1.jpeg",
+        "../frontend/img/conference/2.jpeg",
+        "../frontend/img/conference/3.jpeg",
+        "../frontend/img/conference/4.jpeg",
+    ]
+],
+[
+"title" => "symposium",
+    "images" => [
+        "../frontend/img/symposium/1.jpg",
+        "../frontend/img/symposium/2.jpg",
+        "../frontend/img/symposium/3.jpg",
+        "../frontend/img/symposium/4.jpg",
+         "../frontend/img/symposium/5.jpg",
+         "../frontend/img/symposium/6.jpg",
+          "../frontend/img/symposium/7.jpg",
+           "../frontend/img/symposium/8.jpg",
+            "../frontend/img/symposium/9.jpg",
+             "../frontend/img/symposium/10.jpeg",
+              "../frontend/img/symposium/11.jpeg",
+               "../frontend/img/symposium/12.jpeg",
+    ]
+    ],
+    [
+    "title" => "2025 Inauguration",
+    "images" => [
+        "../frontend/img/2025_inaug/1.jpg",
+        "../frontend/img/2025_inaug/2.jpg",
+        "../frontend/img/2025_inaug/3.jpg",
+        "../frontend/img/2025_inaug/4.jpg",
+        "../frontend/img/2025_inaug/5.jpg",
+        "../frontend/img/2025_inaug/6.jpg",
+        "../frontend/img/2025_inaug/7.jpg",
+        "../frontend/img/2025_inaug/8.jpg",
+    ]
+],
+[
+    "title" => "IT Workshop",
+    "images" => [
+        "../frontend/img/IT - WORKSHOP - 10.09 (1)/IT - WORKSHOP - 10.09/Selected/1.jpeg",
+        "../frontend/img/IT - WORKSHOP - 10.09 (1)/IT - WORKSHOP - 10.09/Selected/2.jpeg",
+        "../frontend/img/IT - WORKSHOP - 10.09 (1)/IT - WORKSHOP - 10.09/Selected/3.jpeg",
+        "../frontend/img/IT - WORKSHOP - 10.09 (1)/IT - WORKSHOP - 10.09/Selected/4.jpeg",
+        "../frontend/img/IT - WORKSHOP - 10.09 (1)/IT - WORKSHOP - 10.09/Selected/5.jpeg",
+        "../frontend/img/IT - WORKSHOP - 10.09 (1)/IT - WORKSHOP - 10.09/Selected/6.jpg",
+        "../frontend/img/IT - WORKSHOP - 10.09 (1)/IT - WORKSHOP - 10.09/Selected/7.jpg",
+        "../frontend/img/IT - WORKSHOP - 10.09 (1)/IT - WORKSHOP - 10.09/Selected/8.jpg",
+    ]
+],
+[
+    "title" => "Guest Lecture",
+    "images" => [
+        "../frontend/img/guest lecture/1.jpeg",
+        "../frontend/img/guest lecture/2.jpeg",
+    ]
+],
+     [
+    "title" => "Value Added Course",
+    "images" => [
+        "../frontend/img/value added course/Selected/1.jpg",
+        "../frontend/img/value added course/Selected/2.jpg",
+        "../frontend/img/value added course/Selected/3.jpg",
+        "../frontend/img/value added course/Selected/4.jpg",
+        "../frontend/img/value added course/Selected/5.jpg",
+    ]
+],
     ];
 
     foreach($gallery as $index => $item) {

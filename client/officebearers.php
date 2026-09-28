@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -116,6 +118,7 @@
           <button class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition" data-year="2023" aria-pressed="true">2023 - 2024</button>
           <button class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition" data-year="2024" aria-pressed="false">2024 - 2025</button>
           <button class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition" data-year="2025" aria-pressed="false">2025 - 2026</button>
+          <button class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition" data-year="2026" aria-pressed="false">2026 - 2027</button>
         </div>
 
         <!-- Cards Grid -->
@@ -220,6 +223,50 @@
           batch: "2024-2028",
           img: "./assets/img/19 lakshmipriya.jpg"
         }
+      ],
+      2026: [
+        {
+          name: "Thanush Kumar.P",
+          role: "President",
+          batch: "2023-2027",
+          img: "./assets/img/24 Thanushkumar P (IT).jpg"
+        },
+        {
+          name: "Archana Devi.C",
+          role: "Vice President",
+          batch: "2023-2027",
+          img: ""
+        },
+       {
+         name: "Sharveshwaran.S.P",
+         role: "Vice President",
+         batch: "2024-2028",
+         img: ""
+        },
+        {
+         name: "Rishikesh.K",
+         role: "Secretary",
+         batch: "2023-2027",
+         img: ""
+      },
+      {
+        name: "Shanmugapriya.N",
+        role: "Secretary",
+        batch: "2024-2028",
+        img: ""
+     },
+     {
+        name: "Charunethra",
+        role: "Joint Secretary",
+        batch: "2025-2029",
+        img: ""
+     },
+     {
+        name: "Nirosh Kumar.R",
+        role: "Joint Secretary",
+        batch: "2025-2029",
+        img: ""
+     }
       ]
     };
 
