@@ -229,43 +229,46 @@
           name: "Thanush Kumar.P",
           role: "President",
           batch: "2023-2027",
-          img: "./assets/img/24 Thanushkumar P (IT).jpg"
+          img: "./assets/img/Thanushkumar.JPG"
         },
         {
           name: "Archana Devi.C",
           role: "Vice President",
           batch: "2023-2027",
-          img: ""
+          img: "./assets/img/Archana devi.JPG"
         },
        {
          name: "Sharveshwaran.S.P",
          role: "Vice President",
          batch: "2024-2028",
-         img: ""
+         img: "./assets/img/Sharveshwaran.JPG"
         },
         {
          name: "Rishikesh.K",
          role: "Secretary",
          batch: "2023-2027",
-         img: ""
+         img: "./assets/img/Rishikesh.JPG"
+         
+         
+      
       },
       {
         name: "Shanmugapriya.N",
         role: "Secretary",
         batch: "2024-2028",
-        img: ""
+        img: "./assets/img/Shanmugapriya.JPG"
      },
      {
-        name: "Charunethra",
+        name: "Sharunethra",
         role: "Joint Secretary",
         batch: "2025-2029",
-        img: ""
+        img: "./assets/img/Sharunethra.JPG"
      },
      {
         name: "Nirosh Kumar.R",
         role: "Joint Secretary",
         batch: "2025-2029",
-        img: ""
+        img: "./assets/img/Niroshkumar.JPG"
      }
       ]
     };

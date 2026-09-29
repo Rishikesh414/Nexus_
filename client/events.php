@@ -1,309 +1,797 @@
 
+<?php
+require_once "../server/config/db.php";
+
+
+// ==================================================
+// HELPER FUNCTION
+// ==================================================
+function e($value)
+{
+    return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
+}
+
+
+// ==================================================
+// IMAGE PATH FUNCTION
+// ==================================================
+function eventImagePath($image)
+{
+    if (empty($image)) {
+        return '';
+    }
+
+    /*
+     * Existing images already stored in DB
+     * Example:
+     * ../frontend/img/conference.jpg
+     */
+    if (
+        strpos($image, '../frontend/') === 0 ||
+        strpos($image, './') === 0 ||
+        strpos($image, 'http://') === 0 ||
+        strpos($image, 'https://') === 0
+    ) {
+        return $image;
+    }
+
+    /*
+     * New images uploaded from admin/events.php
+     *
+     * DB value:
+     * filename.jpg
+     *
+     * Frontend path:
+     * ../admin/uploads/events/filename.jpg
+     */
+    return '../admin/uploads/events/' . $image;
+}
+
+
+// ==================================================
+// FETCH UPCOMING EVENTS
+// ==================================================
+$upcoming_events = [];
+
+$stmt = $conn->prepare("
+    SELECT
+        id,
+        title,
+        description,
+        guest,
+        event_date,
+        image,
+        badge
+    FROM events
+    WHERE event_type = 'upcoming'
+    ORDER BY id ASC
+");
+
+if ($stmt) {
+
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $upcoming_events[] = $row;
+    }
+
+    $stmt->close();
+}
+
+
+// ==================================================
+// FETCH PAST EVENTS
+// ==================================================
+$gallery = [];
+
+$stmt = $conn->prepare("
+    SELECT
+        id,
+        title,
+        description,
+        guest,
+        event_date,
+        image,
+        badge
+    FROM events
+    WHERE event_type = 'past'
+    ORDER BY id DESC
+");
+
+if ($stmt) {
+
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $gallery[] = $row;
+    }
+
+    $stmt->close();
+}
+
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NEXUS Events</title>
-  <!-- AOS for Scroll Animations -->
-  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 
-  <!-- VanillaTilt for 3D Tilt Effect -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.0/vanilla-tilt.min.js"></script>
+    <meta charset="UTF-8">
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @keyframes float {
-      0%,
-      100% {
-        transform: translateY(0);
-      }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-      50% {
-        transform: translateY(-15px);
-      }
-    }
+    <title>Events | NEXUS</title>
 
-    .animate-float {
-      animation: float 4s ease-in-out infinite;
-    }
 
-    /* Flip card styles */
-    .flip-card {
-      perspective: 1000px;
-      width: 100%;
-      height: 250px;
-    }
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    .flip-card-inner {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      transition: transform 0.8s;
-      transform-style: preserve-3d;
-    }
 
-    .flip-card:hover .flip-card-inner {
-      transform: rotateY(180deg);
-    }
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
 
-    .flip-card-front,
-    .flip-card-back {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      border-radius: 1rem;
-      overflow: hidden;
-      -webkit-backface-visibility: hidden;
-      backface-visibility: hidden;
-    }
 
-    .flip-card-front img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    <!-- AOS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/aos@2.3.1/dist/aos.css"
+    >
 
-    .flip-card-back {
-      background: linear-gradient(135deg, rgba(10, 10, 30, 0.95), rgba(20, 0, 50, 0.95));
-      transform: rotateY(180deg);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 1rem;
-      border: 1px solid rgba(0, 255, 255, 0.3);
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
-    }
 
-    .flip-card-back h3 {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: cyan;
-      margin-bottom: 0.5rem;
-      text-shadow: 0 0 8px purple, 0 0 15px cyan;
-      padding: 0 0.5rem;
-      word-break: break-word;
-    }
+    <!-- Vanilla Tilt -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.2/vanilla-tilt.min.js"></script>
 
-    .flip-card-back p {
-      font-size: 0.95rem;
-      color: #eee;
-      margin: 0.2rem 0;
-    }
 
-    /* Card container hover effect & pull-up */
-    .tilt-card {
-      background-color: #1f2937; /* Tailwind's gray-800 */
-      transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
-      border-radius: 0.75rem; /* match rounded-xl */
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-      cursor: pointer;
-    }
+    <style>
 
-    .tilt-card:hover {
-      transform: translateY(-12px) scale(1.05);
-      background-color: #404246ff; /* Tailwind blue-500 */
-      box-shadow: 0 15px 25px rgba(59, 130, 246, 0.5);
-      z-index: 10;
-    }
+        body {
+            background: #111827;
+            color: white;
+        }
 
-  </style>
+        .event-card {
+            transition: all 0.3s ease;
+        }
+
+        .event-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .event-image {
+            transition: transform 0.5s ease;
+        }
+
+        .event-card:hover .event-image {
+            transform: scale(1.05);
+        }
+
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+    </style>
+
 </head>
 
-<body class="bg-gray-900 text-white relative">
 
-  <!-- 3D Background -->
-  <div class="fixed inset-0 z-0 pointer-events-none">
-    <?php include("includes/3d.php"); ?>
-  </div>
+<body class="bg-gray-900 text-white">
 
-  <!-- Main Content -->
-  <div class="relative z-10">
 
-    <!-- Navbar -->
-    <?php include("includes/navbar.php"); ?>
+<!-- ==================================================
+     3D BACKGROUND
+================================================== -->
 
-    <!-- Hero Section -->
-    <section class="text-center py-16 px-6">
-      <div class="inline-flex items-center justify-center w-28 h-28 mb-6 mx-auto">
-        <img src="./img/ne.png" alt="" class="rounded-2xl animate-float" />
-      </div>
-      <h1
-        class="text-5xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300">
-        NEXUS
-      </h1>
-      <p class="text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed text-gray-200">
-        Connecting minds, fostering innovation, and building the future together
-      </p>
-    </section>
+<div class="fixed inset-0 -z-10">
 
-   
+    <?php
+    $threeDFile = __DIR__ . "/includes/3d.php";
 
-    <!-- Upcoming Events Section -->
-    <section class="max-w-6xl mx-auto px-6 py-12">
-      <h2 class="text-3xl font-bold text-center mb-10 text-purple-300">Upcoming Events</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-        <?php
-        $upcoming_events = [
-    [
-        "title" => "Upcoming Event",
-        "description" => "Event details will be updated soon.",
-        "date" => "Coming Soon",
-        "image" => "./assets/img/placeholder.jpg",
-        "badge" => "Coming Soon"
-    ],
-    [
-        "title" => "Upcoming Event",
-        "description" => "Event details will be updated soon.",
-        "date" => "Coming Soon",
-        "image" => "./assets/img/placeholder.jpg",
-        "badge" => "Coming Soon"
-    ],
-    [
-        "title" => "Upcoming Event",
-        "description" => "Event details will be updated soon.",
-        "date" => "Coming Soon",
-        "image" => "./assets/img/placeholder.jpg",
-        "badge" => "Coming Soon"
-    ]
-];
+    if (file_exists($threeDFile)) {
+        include $threeDFile;
+    }
+    ?>
 
-        foreach ($upcoming_events as $index => $event) {
-          $delay = $index * 180; // slightly slower stagger
-          echo '
-    <div class="tilt-card" data-aos="fade-up" data-aos-delay="' . $delay . '">
-      <img src="' . $event["image"] . '" alt="' . $event["title"] . '" class="w-full h-48 object-cover" />
-      <div class="p-4 transition-all duration-500 group-hover:bg-opacity-90">
-        <h3 class="text-xl font-bold text-purple-400 mb-1">' . $event["title"] . '</h3>
-        <p class="text-sm text-gray-300 mb-2">' . $event["description"] . '</p>
-        <p class="text-xs text-purple-200 mb-1">📅 ' . $event["date"] . '</p>';
-          if (isset($event["fee"])) {
-            echo '<p class="text-xs text-blue-300 mb-1">💸 Fee: ' . $event["fee"] . '</p>';
-          }
-          if (isset($event["badge"])) {
-            echo '<span class="inline-block bg-purple-700 text-xs px-2 py-1 rounded-full text-white">' . $event["badge"] . '</span>';
-          }
-          if(isset($event['id'])==1) {
-            echo '<a href="./workshop.php" class="ml-5"><button class="inline-block bg-purple-700 text-xs px-2 py-1 rounded-full text-white">View</button></a>';
-          }
-          echo '
-          
-      </div>
-    </div>';
-        }
-        ?>
-      </div>
-    </section>
+</div>
 
-     <!-- Past Events Section -->
-    <section class="max-w-6xl mx-auto px-6 py-12">
-      <h2 class="text-3xl font-bold text-center mb-10 text-purple-300">Past Events</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        <?php
-       $gallery = [
-    [
-        "title" => "Text Web Social Media Analytics",
-        "guest" => "Dr. R. Lokesh Kumar (VIT Chennai)",
-        "date" => "25 Oct 2024",
-        "image" => "../frontend/img/text_social_media/51.jpeg",
-        "badge" => "Guest Lecture"
-    ],
-    [
-        "title" => "Laravel – Building Modern Web Applications",
-        "guest" => "Mr. K. Anandraj, CEO, TM Innovations",
-        "date" => "08 Feb 2025 to 14 Feb 2025",
-        "image" => "../frontend/img/laravel.jpeg",
-        "badge" => "Workshop"
-    ],
-    [
-        "title" => "Django and its Frameworks",
-        "guest" => "Mr. K. Anandraj, CEO, TM Innovations",
-        "date" => "15 Feb 2025 to 20 Feb 2025",
-        "image" => "../frontend/img/workshop_django/24.jpeg",
-        "badge" => "Workshop"
-    ],
-    [
-        "title" => "Mastering the job hunt – interview preparation for professional careers",
-        "guest" => "Mr. Arasakumar S, Senior Software Engineer, Infosys Pvt. Ltd.",
-        "date" => "09 Nov 2024",
-        "image" => "../frontend/img/2024_inaug/16.jpeg",
-        "badge" => "Career Talk"
-    ],
 
-    // Old Upcoming Events moved to Past Events
+<!-- ==================================================
+     NAVBAR
+================================================== -->
 
-    [
-        "title" => "State-level Hands-on Workshop on “Deploying the Applications on AWS cloud”",
-        "guest" => "Association Event",
-        "date" => "6th September",
-        "image" => "./assets/img/aws.png",
-        "badge" => "Workshop"
-    ],
-    [
-        "title" => "Code Crafters Club – 4-Month Association Activities (Team-Based)",
-        "guest" => "Association Event",
-        "date" => "Duration 4-Month",
-        "image" => "./assets/img/C.png",
-        "badge" => "Association Activities"
-    ],
-    [
-        "title" => "The Full Stack Approach to SAP Integration and Customization",
-        "guest" => "Association Event",
-        "date" => "23.08.2025 & Saturday - 12:00pm - 1:30pm",
-        "image" => "./assets/img/FSapp.png",
-        "badge" => "Tech Talk"
-    ],
-    [
-        "title" => "Build your TechStack: The Digital Toolbox for Future Engineers",
-        "guest" => "Association Event",
-        "date" => "13.09.2025 & Saturday",
-        "image" => "./assets/img/Fe.gif",
-        "badge" => "Tech Talk"
-    ]
-];
+<?php
 
-        foreach ($gallery as $index => $event) {
-          $delay = $index * 150; // stagger delay 150ms
-          echo '
-      <div class="tilt-card" data-aos="fade-up" data-aos-delay="' . $delay . '">
-        <img src="' . $event["image"] . '" alt="' . $event["title"] . '" class="w-full h-48 object-cover" />
-        <div class="p-4">
-          <h3 class="text-xl font-bold text-purple-400 mb-1">' . $event["title"] . '</h3>
-          <p class="text-sm text-gray-300 mb-1"><strong>Chief Guest:</strong> ' . $event["guest"] . '</p>
-          <p class="text-xs text-purple-200 mb-1">📅 ' . $event["date"] . '</p>';
-          if (isset($event["badge"])) {
-            echo '<span class="inline-block bg-purple-700 text-xs px-2 py-1 rounded-full text-white">' . $event["badge"] . '</span>';
-          }
-          echo '
+$navbarFile = __DIR__ . "/includes/navbar.php";
+
+if (file_exists($navbarFile)) {
+    include $navbarFile;
+}
+
+?>
+
+
+<!-- ==================================================
+     HERO SECTION
+================================================== -->
+
+<section class="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+
+    <div class="absolute inset-0 bg-gradient-to-b from-purple-900/40 via-gray-900/70 to-gray-900"></div>
+
+
+    <div
+        class="relative z-10 text-center px-6"
+        data-aos="fade-up"
+    >
+
+        <img
+            src="./img/ne.png"
+            alt="NEXUS"
+            class="w-28 h-28 md:w-36 md:h-36 mx-auto mb-6 object-contain"
+        >
+
+
+        <h1 class="text-5xl md:text-7xl font-extrabold tracking-wider">
+
+            NEXUS
+
+        </h1>
+
+
+        <p class="mt-5 text-gray-300 text-lg md:text-xl max-w-2xl mx-auto">
+
+            Connecting minds, fostering innovation,
+            and building the future together
+
+        </p>
+
+    </div>
+
+</section>
+
+
+
+<!-- ==================================================
+     UPCOMING EVENTS
+================================================== -->
+
+<section class="py-16 px-6">
+
+    <div class="max-w-7xl mx-auto">
+
+
+        <!-- SECTION TITLE -->
+
+        <div
+            class="text-center mb-12"
+            data-aos="fade-up"
+        >
+
+            <span class="text-purple-400 font-semibold tracking-widest uppercase">
+                What's Next
+            </span>
+
+            <h2 class="text-4xl md:text-5xl font-bold mt-3">
+
+                Upcoming Events
+
+            </h2>
+
+            <div class="w-24 h-1 bg-purple-500 mx-auto mt-5 rounded-full"></div>
+
         </div>
-      </div>';
-        }
-        ?>
-      </div>
-    </section>
 
-  </div>
-  <script>
-    AOS.init({
-      duration: 700, // snappier animation
-      easing: 'ease-in-out',
-    
-      mirror: false
-    });
 
-    VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
-      max: 15,
-      speed: 400,
-      glare: true,
-      "max-glare": 0.2,
-    });
-  </script>
+        <?php if (!empty($upcoming_events)): ?>
+
+
+            <!-- EVENTS GRID -->
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+
+                <?php foreach ($upcoming_events as $index => $event): ?>
+
+                    <?php
+                    $imagePath = eventImagePath($event['image']);
+                    ?>
+
+
+                    <div
+                        class="event-card bg-gradient-to-br from-purple-900/80 to-gray-900 border border-purple-700/40 rounded-2xl overflow-hidden shadow-xl"
+                        data-aos="fade-up"
+                        data-aos-delay="<?= ($index % 3) * 100 ?>"
+                        data-tilt
+                        data-tilt-max="5"
+                    >
+
+
+                        <!-- IMAGE -->
+
+                        <div class="relative h-56 overflow-hidden bg-gray-800">
+
+                            <?php if (!empty($imagePath)): ?>
+
+                                <img
+                                    src="<?= e($imagePath) ?>"
+                                    alt="<?= e($event['title']) ?>"
+                                    class="event-image w-full h-full object-cover"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                >
+
+                                <div
+                                    class="w-full h-full items-center justify-center text-gray-500 hidden"
+                                >
+
+                                    <i class="fas fa-image text-5xl"></i>
+
+                                </div>
+
+                            <?php else: ?>
+
+                                <div
+                                    class="w-full h-full flex items-center justify-center text-gray-500"
+                                >
+
+                                    <i class="fas fa-calendar-days text-5xl"></i>
+
+                                </div>
+
+                            <?php endif; ?>
+
+
+                            <!-- BADGE -->
+
+                            <?php if (!empty($event['badge'])): ?>
+
+                                <div class="absolute top-4 left-4">
+
+                                    <span class="bg-purple-600/90 backdrop-blur-sm text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg">
+
+                                        <?= e($event['badge']) ?>
+
+                                    </span>
+
+                                </div>
+
+                            <?php endif; ?>
+
+                        </div>
+
+
+                        <!-- CONTENT -->
+
+                        <div class="p-6">
+
+
+                            <h3 class="text-2xl font-bold mb-3">
+
+                                <?= e($event['title']) ?>
+
+                            </h3>
+
+
+                            <!-- DESCRIPTION -->
+
+                            <?php if (!empty($event['description'])): ?>
+
+                                <p class="text-gray-300 text-sm leading-relaxed line-clamp-3 mb-5">
+
+                                    <?= e($event['description']) ?>
+
+                                </p>
+
+                            <?php endif; ?>
+
+
+                            <!-- DATE -->
+
+                            <?php if (!empty($event['event_date'])): ?>
+
+                                <div class="flex items-start gap-3 text-gray-300 mb-3">
+
+                                    <i class="fas fa-calendar-days text-purple-400 mt-1"></i>
+
+                                    <span class="text-sm">
+
+                                        <?= e($event['event_date']) ?>
+
+                                    </span>
+
+                                </div>
+
+                            <?php endif; ?>
+
+
+                            <!-- GUEST -->
+
+                            <?php if (!empty($event['guest'])): ?>
+
+                                <div class="flex items-start gap-3 text-gray-300 mb-4">
+
+                                    <i class="fas fa-user text-purple-400 mt-1"></i>
+
+                                    <span class="text-sm">
+
+                                        <?= e($event['guest']) ?>
+
+                                    </span>
+
+                                </div>
+
+                            <?php endif; ?>
+
+
+                            <!-- STATUS -->
+
+                            <div class="pt-4 border-t border-purple-700/30">
+
+                                <span class="inline-flex items-center gap-2 text-green-400 text-sm font-semibold">
+
+                                    <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+
+                                    Upcoming
+
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                <?php endforeach; ?>
+
+
+            </div>
+
+
+        <?php else: ?>
+
+
+            <!-- NO UPCOMING EVENTS -->
+
+            <div
+                class="text-center py-16 bg-gray-800/50 rounded-2xl border border-gray-700"
+                data-aos="fade-up"
+            >
+
+                <i class="fas fa-calendar-xmark text-5xl text-gray-500 mb-5"></i>
+
+                <h3 class="text-2xl font-bold text-gray-300">
+
+                    No Upcoming Events
+
+                </h3>
+
+                <p class="text-gray-500 mt-2">
+
+                    New events will be announced soon.
+
+                </p>
+
+            </div>
+
+        <?php endif; ?>
+
+
+    </div>
+
+</section>
+
+
+
+<!-- ==================================================
+     PAST EVENTS / GALLERY
+================================================== -->
+
+<section class="py-16 px-6 bg-gray-950/50">
+
+    <div class="max-w-7xl mx-auto">
+
+
+        <!-- SECTION TITLE -->
+
+        <div
+            class="text-center mb-12"
+            data-aos="fade-up"
+        >
+
+            <span class="text-purple-400 font-semibold tracking-widest uppercase">
+                Memories
+            </span>
+
+            <h2 class="text-4xl md:text-5xl font-bold mt-3">
+
+                Past Events
+
+            </h2>
+
+            <div class="w-24 h-1 bg-purple-500 mx-auto mt-5 rounded-full"></div>
+
+        </div>
+
+
+        <?php if (!empty($gallery)): ?>
+
+
+            <!-- PAST EVENTS GRID -->
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+
+                <?php foreach ($gallery as $index => $event): ?>
+
+                    <?php
+                    $imagePath = eventImagePath($event['image']);
+                    ?>
+
+
+                    <div
+                        class="event-card bg-gray-800/80 border border-gray-700 rounded-2xl overflow-hidden shadow-xl"
+                        data-aos="fade-up"
+                        data-aos-delay="<?= ($index % 3) * 100 ?>"
+                        data-tilt
+                        data-tilt-max="5"
+                    >
+
+
+                        <!-- IMAGE -->
+
+                        <div class="relative h-56 overflow-hidden bg-gray-900">
+
+
+                            <?php if (!empty($imagePath)): ?>
+
+                                <img
+                                    src="<?= e($imagePath) ?>"
+                                    alt="<?= e($event['title']) ?>"
+                                    class="event-image w-full h-full object-cover"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                >
+
+                                <div
+                                    class="w-full h-full items-center justify-center text-gray-500 hidden"
+                                >
+
+                                    <i class="fas fa-image text-5xl"></i>
+
+                                </div>
+
+                            <?php else: ?>
+
+                                <div
+                                    class="w-full h-full flex items-center justify-center text-gray-500"
+                                >
+
+                                    <i class="fas fa-images text-5xl"></i>
+
+                                </div>
+
+                            <?php endif; ?>
+
+
+                            <!-- BADGE -->
+
+                            <?php if (!empty($event['badge'])): ?>
+
+                                <div class="absolute top-4 left-4">
+
+                                    <span class="bg-gray-900/90 backdrop-blur-sm text-purple-300 px-4 py-2 rounded-full text-xs font-semibold border border-purple-500/30">
+
+                                        <?= e($event['badge']) ?>
+
+                                    </span>
+
+                                </div>
+
+                            <?php endif; ?>
+
+
+                        </div>
+
+
+                        <!-- CONTENT -->
+
+                        <div class="p-6">
+
+
+                            <h3 class="text-xl font-bold mb-4">
+
+                                <?= e($event['title']) ?>
+
+                            </h3>
+
+
+                            <!-- GUEST -->
+
+                            <?php if (!empty($event['guest'])): ?>
+
+                                <div class="flex items-start gap-3 mb-3">
+
+                                    <i class="fas fa-user-tie text-purple-400 mt-1"></i>
+
+                                    <div>
+
+                                        <p class="text-xs text-gray-500 uppercase tracking-wide">
+
+                                            Guest / Resource Person
+
+                                        </p>
+
+                                        <p class="text-gray-300 text-sm mt-1">
+
+                                            <?= e($event['guest']) ?>
+
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            <?php endif; ?>
+
+
+                            <!-- DATE -->
+
+                            <?php if (!empty($event['event_date'])): ?>
+
+                                <div class="flex items-start gap-3">
+
+                                    <i class="fas fa-calendar-days text-purple-400 mt-1"></i>
+
+                                    <div>
+
+                                        <p class="text-xs text-gray-500 uppercase tracking-wide">
+
+                                            Date / Duration
+
+                                        </p>
+
+                                        <p class="text-gray-300 text-sm mt-1">
+
+                                            <?= e($event['event_date']) ?>
+
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            <?php endif; ?>
+
+
+                            <!-- PAST STATUS -->
+
+                            <div class="pt-4 mt-4 border-t border-gray-700">
+
+                                <span class="inline-flex items-center gap-2 text-gray-400 text-sm">
+
+                                    <i class="fas fa-circle-check text-green-500"></i>
+
+                                    Completed Event
+
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                <?php endforeach; ?>
+
+
+            </div>
+
+
+        <?php else: ?>
+
+
+            <!-- NO PAST EVENTS -->
+
+            <div
+                class="text-center py-16 bg-gray-800/50 rounded-2xl border border-gray-700"
+                data-aos="fade-up"
+            >
+
+                <i class="fas fa-images text-5xl text-gray-500 mb-5"></i>
+
+                <h3 class="text-2xl font-bold text-gray-300">
+
+                    No Past Events
+
+                </h3>
+
+                <p class="text-gray-500 mt-2">
+
+                    Event records will appear here.
+
+                </p>
+
+            </div>
+
+        <?php endif; ?>
+
+
+    </div>
+
+</section>
+
+
+
+<!-- ==================================================
+     FOOTER
+================================================== -->
+
+<footer class="bg-gray-950 border-t border-gray-800 py-8">
+
+    <div class="max-w-7xl mx-auto px-6 text-center">
+
+        <p class="text-gray-500 text-sm">
+
+            &copy; <?= date('Y') ?> NEXUS. All Rights Reserved.
+
+        </p>
+
+    </div>
+
+</footer>
+
+
+
+<!-- ==================================================
+     AOS SCRIPT
+================================================== -->
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<script>
+
+AOS.init({
+    duration: 800,
+    once: true,
+    offset: 80
+});
+
+</script>
+
+
+
+<!-- ==================================================
+     VANILLA TILT
+================================================== -->
+
+<script>
+
+VanillaTilt.init(
+    document.querySelectorAll("[data-tilt]"),
+    {
+        max: 5,
+        speed: 500,
+        glare: true,
+        "max-glare": 0.15
+    }
+);
+
+</script>
+
 
 </body>
 
 </html>
+
