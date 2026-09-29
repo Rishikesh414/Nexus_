@@ -2,15 +2,85 @@
 
 include "../server/config/db.php";
 
+/*
+ * YEAR FILTER
+ * No year selected = show ALL records.
+ * Selected year = filter by the actual date/duration year.
+ * If a record has no year in its date/duration field, its
+ * academic_year is used as a fallback.
+ */
+$selectedYear = isset($_GET['year']) ? (int)$_GET['year'] : null;
+
+if ($selectedYear !== null && !in_array($selectedYear, [2024, 2025, 2026], true)) {
+    $selectedYear = null;
+}
 
 /* =========================================================
    1. ACADEMIC / TECHNICAL ACHIEVEMENTS
    ========================================================= */
 
+$academicWhereCurrent = "";
+$academicWhereOld = "";
+
+if ($selectedYear !== null) {
+    $academicWhereCurrent = "WHERE aa.date_duration REGEXP '(^|[^0-9])" . $selectedYear . "([^0-9]|$)'";
+    $academicWhereOld = "WHERE YEAR(a.achievement_date) = " . $selectedYear;
+}
+
 $academic_result = $conn->query("
-    SELECT *
-    FROM academic_achievements
-    ORDER BY id ASC
+    SELECT
+        aa.id,
+        aa.date_duration,
+        aa.student,
+        aa.year_department,
+        aa.activity_event,
+        aa.achievement_role,
+        aa.organization_venue,
+        CASE
+            WHEN aa.date_duration REGEXP '(^|[^0-9])2026([^0-9]|$)' THEN 2026
+            WHEN aa.date_duration REGEXP '(^|[^0-9])2025([^0-9]|$)' THEN 2025
+            WHEN aa.date_duration REGEXP '(^|[^0-9])2024([^0-9]|$)' THEN 2024
+            ELSE COALESCE(CAST(LEFT(aa.academic_year, 4) AS UNSIGNED), 0)
+        END AS sort_year
+    FROM academic_achievements aa
+    $academicWhereCurrent
+
+    UNION ALL
+
+    SELECT
+        a.achievement_id AS id,
+        DATE_FORMAT(a.achievement_date, '%d/%m/%Y') AS date_duration,
+        COALESCE(s.name, CONCAT('Student ID: ', a.student_id)) AS student,
+        CONCAT(
+            CASE s.year
+                WHEN '1' THEN 'I'
+                WHEN '2' THEN 'II'
+                WHEN '3' THEN 'III'
+                WHEN '4' THEN 'IV'
+                ELSE s.year
+            END,
+            ' ',
+            COALESCE(s.department, '')
+        ) AS year_department,
+        a.achievement_name AS activity_event,
+        CONCAT(
+            COALESCE(a.position, ''),
+            CASE
+                WHEN a.position IS NOT NULL AND a.position <> ''
+                     AND a.description IS NOT NULL AND a.description <> ''
+                THEN ' - '
+                ELSE ''
+            END,
+            COALESCE(a.description, '')
+        ) AS achievement_role,
+        'NEXUS' AS organization_venue,
+        YEAR(a.achievement_date) AS sort_year
+    FROM achievements a
+    LEFT JOIN students s
+        ON s.student_id = a.student_id
+    $academicWhereOld
+
+    ORDER BY sort_year DESC, id ASC
 ");
 
 if (!$academic_result) {
@@ -22,10 +92,23 @@ if (!$academic_result) {
    2. DEPARTMENT ACTIVITIES
    ========================================================= */
 
+$departmentFilter = "";
+
+if ($selectedYear !== null) {
+    $departmentFilter = "WHERE date_duration REGEXP '(^|[^0-9])" . $selectedYear . "([^0-9]|$)'";
+}
+
 $department_result = $conn->query("
-    SELECT *
+    SELECT *,
+        CASE
+            WHEN date_duration REGEXP '(^|[^0-9])2026([^0-9]|$)' THEN 2026
+            WHEN date_duration REGEXP '(^|[^0-9])2025([^0-9]|$)' THEN 2025
+            WHEN date_duration REGEXP '(^|[^0-9])2024([^0-9]|$)' THEN 2024
+            ELSE COALESCE(CAST(LEFT(academic_year, 4) AS UNSIGNED), 0)
+        END AS sort_year
     FROM department_activities
-    ORDER BY id ASC
+    $departmentFilter
+    ORDER BY sort_year DESC, id ASC
 ");
 
 if (!$department_result) {
@@ -37,10 +120,23 @@ if (!$department_result) {
    3. HACKATHONS / EXPOS / CONFERENCES
    ========================================================= */
 
+$hackathonFilter = "";
+
+if ($selectedYear !== null) {
+    $hackathonFilter = "WHERE date_duration REGEXP '(^|[^0-9])" . $selectedYear . "([^0-9]|$)'";
+}
+
 $hackathon_result = $conn->query("
-    SELECT *
+    SELECT *,
+        CASE
+            WHEN date_duration REGEXP '(^|[^0-9])2026([^0-9]|$)' THEN 2026
+            WHEN date_duration REGEXP '(^|[^0-9])2025([^0-9]|$)' THEN 2025
+            WHEN date_duration REGEXP '(^|[^0-9])2024([^0-9]|$)' THEN 2024
+            ELSE COALESCE(CAST(LEFT(academic_year, 4) AS UNSIGNED), 0)
+        END AS sort_year
     FROM hackathons_expos_conferences
-    ORDER BY id ASC
+    $hackathonFilter
+    ORDER BY sort_year DESC, id ASC
 ");
 
 if (!$hackathon_result) {
@@ -52,10 +148,23 @@ if (!$hackathon_result) {
    4. SPORTS ACHIEVEMENTS
    ========================================================= */
 
+$sportsFilter = "";
+
+if ($selectedYear !== null) {
+    $sportsFilter = "WHERE date_duration REGEXP '(^|[^0-9])" . $selectedYear . "([^0-9]|$)'";
+}
+
 $sports_result = $conn->query("
-    SELECT *
+    SELECT *,
+        CASE
+            WHEN date_duration REGEXP '(^|[^0-9])2026([^0-9]|$)' THEN 2026
+            WHEN date_duration REGEXP '(^|[^0-9])2025([^0-9]|$)' THEN 2025
+            WHEN date_duration REGEXP '(^|[^0-9])2024([^0-9]|$)' THEN 2024
+            ELSE COALESCE(CAST(LEFT(academic_year, 4) AS UNSIGNED), 0)
+        END AS sort_year
     FROM sports_achievements
-    ORDER BY id ASC
+    $sportsFilter
+    ORDER BY sort_year DESC, id ASC
 ");
 
 if (!$sports_result) {
@@ -65,12 +174,39 @@ if (!$sports_result) {
 
 /* =========================================================
    5. INTERNSHIPS & COMPANY PROJECTS
+   =========================================================
+   Some internship rows have a real date range in duration_notes.
+   Older rows have no date in duration_notes, so academic_year is
+   used as the fallback. This prevents those valid rows from being
+   accidentally hidden.
    ========================================================= */
 
+$internshipFilter = "";
+
+if ($selectedYear !== null) {
+    $internshipFilter = "WHERE (
+        duration_notes REGEXP '(^|[^0-9])" . $selectedYear . "([^0-9]|$)'
+        OR (
+            duration_notes NOT REGEXP '20[0-9]{2}'
+            AND academic_year REGEXP '(^|-)" . $selectedYear . "(-|$)'
+        )
+    )";
+}
+
 $internship_result = $conn->query("
-    SELECT *
+    SELECT *,
+        CASE
+            WHEN duration_notes REGEXP '(^|[^0-9])2026([^0-9]|$)' THEN 2026
+            WHEN duration_notes REGEXP '(^|[^0-9])2025([^0-9]|$)' THEN 2025
+            WHEN duration_notes REGEXP '(^|[^0-9])2024([^0-9]|$)' THEN 2024
+            WHEN academic_year REGEXP '2026' THEN 2026
+            WHEN academic_year REGEXP '2025' THEN 2025
+            WHEN academic_year REGEXP '2024' THEN 2024
+            ELSE 0
+        END AS sort_year
     FROM internships_company_projects
-    ORDER BY id ASC
+    $internshipFilter
+    ORDER BY sort_year DESC, id ASC
 ");
 
 if (!$internship_result) {
@@ -585,7 +721,7 @@ if (!$internship_result) {
 
         <a
           href="achievements.php?year=2024"
-          class="year-btn"
+          class="year-btn <?= $selectedYear === 2024 ? 'active' : '' ?>"
         >
 
           2024
@@ -595,7 +731,7 @@ if (!$internship_result) {
 
         <a
           href="achievements.php?year=2025"
-          class="year-btn"
+          class="year-btn <?= $selectedYear === 2025 ? 'active' : '' ?>"
         >
 
           2025
@@ -605,7 +741,7 @@ if (!$internship_result) {
 
         <a
           href="achievements.php?year=2026"
-          class="year-btn"
+          class="year-btn <?= $selectedYear === 2026 ? 'active' : '' ?>"
         >
 
           2026
@@ -720,39 +856,27 @@ if (!$internship_result) {
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['date_duration']
-                  ) ?>
+                  <?= htmlspecialchars($row['date_duration'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['student']
-                  ) ?>
+                  <?= htmlspecialchars($row['student'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['year_department']
-                  ) ?>
+                  <?= htmlspecialchars($row['year_department'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['activity_event']
-                  ) ?>
+                  <?= htmlspecialchars($row['activity_event'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['achievement_role']
-                  ) ?>
+                  <?= htmlspecialchars($row['achievement_role'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['organization_venue']
-                  ) ?>
+                  <?= htmlspecialchars($row['organization_venue'] ?? '') ?>
                 </td>
 
               </tr>
@@ -891,27 +1015,19 @@ if (!$internship_result) {
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['date_duration']
-                  ) ?>
+                  <?= htmlspecialchars($row['date_duration'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['activity_event']
-                  ) ?>
+                  <?= htmlspecialchars($row['activity_event'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['department_joint']
-                  ) ?>
+                  <?= htmlspecialchars($row['department_joint'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['guest_resource']
-                  ) ?>
+                  <?= htmlspecialchars($row['guest_resource'] ?? '') ?>
                 </td>
 
               </tr>
@@ -1050,27 +1166,19 @@ if (!$internship_result) {
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['date_duration']
-                  ) ?>
+                  <?= htmlspecialchars($row['date_duration'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['event']
-                  ) ?>
+                  <?= htmlspecialchars($row['event'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['students']
-                  ) ?>
+                  <?= htmlspecialchars($row['students'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['venue_organization']
-                  ) ?>
+                  <?= htmlspecialchars($row['venue_organization'] ?? '') ?>
                 </td>
 
               </tr>
@@ -1209,27 +1317,19 @@ if (!$internship_result) {
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['date_duration']
-                  ) ?>
+                  <?= htmlspecialchars($row['date_duration'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['sport_event']
-                  ) ?>
+                  <?= htmlspecialchars($row['sport_event'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['students']
-                  ) ?>
+                  <?= htmlspecialchars($row['students'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['achievement_position']
-                  ) ?>
+                  <?= htmlspecialchars($row['achievement_position'] ?? '') ?>
                 </td>
 
               </tr>
@@ -1372,33 +1472,23 @@ if (!$internship_result) {
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['company_organization']
-                  ) ?>
+                  <?= htmlspecialchars($row['company_organization'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['project_role']
-                  ) ?>
+                  <?= htmlspecialchars($row['project_role'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['students']
-                  ) ?>
+                  <?= htmlspecialchars($row['students'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['staff_mentor']
-                  ) ?>
+                  <?= htmlspecialchars($row['staff_mentor'] ?? '') ?>
                 </td>
 
                 <td class="px-4 py-2 border">
-                  <?= htmlspecialchars(
-                    $row['duration_notes']
-                  ) ?>
+                  <?= htmlspecialchars($row['duration_notes'] ?? '') ?>
                 </td>
 
               </tr>
