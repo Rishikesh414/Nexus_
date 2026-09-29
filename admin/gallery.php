@@ -1,26 +1,10 @@
 <?php
 session_start();
 
-/* =========================================
-   DATABASE CONNECTION
-========================================= */
 require_once("../server/config/db.php");
 
-/* =========================================
-   OPTIONAL ADMIN SESSION CHECK
-========================================= */
-// if (!isset($_SESSION['admin_id'])) {
-//     header("Location: ../index.php");
-//     exit();
-// }
-
-
-/* =========================================
-   VARIABLES
-========================================= */
 $message = "";
 $message_type = "";
-
 
 /* =========================================
    ADD GALLERY
@@ -45,18 +29,13 @@ if (isset($_POST['add_gallery'])) {
 
     } else {
 
-        /* Create gallery group */
-
         $stmt = $conn->prepare(
-            "INSERT INTO gallery_groups (title)
-             VALUES (?)"
+            "INSERT INTO gallery_groups (title) VALUES (?)"
         );
 
         if (!$stmt) {
 
-            $message =
-                "Database error: " . $conn->error;
-
+            $message = "Database error: " . $conn->error;
             $message_type = "error";
 
         } else {
@@ -66,29 +45,15 @@ if (isset($_POST['add_gallery'])) {
             if ($stmt->execute()) {
 
                 $gallery_id = $stmt->insert_id;
-
                 $stmt->close();
 
-
-                /* =========================================
-                   UPLOAD DIRECTORY
-                ========================================= */
+                /* Upload folder */
 
                 $upload_dir = "../uploads/gallery/";
 
                 if (!is_dir($upload_dir)) {
-
-                    mkdir(
-                        $upload_dir,
-                        0777,
-                        true
-                    );
+                    mkdir($upload_dir, 0777, true);
                 }
-
-
-                /* =========================================
-                   ALLOWED FILE TYPES
-                ========================================= */
 
                 $allowed = [
                     "jpg",
@@ -99,46 +64,23 @@ if (isset($_POST['add_gallery'])) {
 
                 $uploaded_count = 0;
 
+                /* Upload images */
 
-                /* =========================================
-                   UPLOAD IMAGES
-                ========================================= */
+                foreach ($_FILES['images']['name'] as $key => $name) {
 
-                foreach (
-                    $_FILES['images']['name']
-                    as $key => $name
-                ) {
-
-                    if (
-                        $_FILES['images']['error'][$key] != 0
-                    ) {
+                    if ($_FILES['images']['error'][$key] != 0) {
                         continue;
                     }
 
-
-                    $tmp_name =
-                        $_FILES['images']['tmp_name'][$key];
-
+                    $tmp_name = $_FILES['images']['tmp_name'][$key];
 
                     $extension = strtolower(
-                        pathinfo(
-                            $name,
-                            PATHINFO_EXTENSION
-                        )
+                        pathinfo($name, PATHINFO_EXTENSION)
                     );
 
-
-                    if (
-                        !in_array(
-                            $extension,
-                            $allowed
-                        )
-                    ) {
+                    if (!in_array($extension, $allowed)) {
                         continue;
                     }
-
-
-                    /* Unique filename */
 
                     $new_name =
                         time() .
@@ -147,11 +89,9 @@ if (isset($_POST['add_gallery'])) {
                         "." .
                         $extension;
 
-
                     $destination =
                         $upload_dir .
                         $new_name;
-
 
                     if (
                         move_uploaded_file(
@@ -160,21 +100,15 @@ if (isset($_POST['add_gallery'])) {
                         )
                     ) {
 
-                        /*
-                         * Path stored in database
-                         */
-
                         $db_path =
                             "uploads/gallery/" .
                             $new_name;
-
 
                         $image_stmt = $conn->prepare(
                             "INSERT INTO gallery_images
                             (gallery_id, image_path)
                             VALUES (?, ?)"
                         );
-
 
                         if ($image_stmt) {
 
@@ -184,24 +118,14 @@ if (isset($_POST['add_gallery'])) {
                                 $db_path
                             );
 
-
-                            if (
-                                $image_stmt->execute()
-                            ) {
-
+                            if ($image_stmt->execute()) {
                                 $uploaded_count++;
                             }
-
 
                             $image_stmt->close();
                         }
                     }
                 }
-
-
-                /* =========================================
-                   SUCCESS / FAILURE
-                ========================================= */
 
                 if ($uploaded_count > 0) {
 
@@ -214,15 +138,9 @@ if (isset($_POST['add_gallery'])) {
 
                 } else {
 
-                    /*
-                     * Remove empty gallery
-                     */
-
                     $delete_stmt = $conn->prepare(
-                        "DELETE FROM gallery_groups
-                         WHERE id = ?"
+                        "DELETE FROM gallery_groups WHERE id = ?"
                     );
-
 
                     if ($delete_stmt) {
 
@@ -232,10 +150,8 @@ if (isset($_POST['add_gallery'])) {
                         );
 
                         $delete_stmt->execute();
-
                         $delete_stmt->close();
                     }
-
 
                     $message =
                         "No valid images were uploaded.";
@@ -266,8 +182,7 @@ if (isset($_GET['delete'])) {
 
     $id = intval($_GET['delete']);
 
-
-    /* Get image paths */
+    /* Get images */
 
     $stmt = $conn->prepare(
         "SELECT image_path
@@ -275,42 +190,24 @@ if (isset($_GET['delete'])) {
          WHERE gallery_id = ?"
     );
 
-
     if ($stmt) {
 
-        $stmt->bind_param(
-            "i",
-            $id
-        );
-
+        $stmt->bind_param("i", $id);
         $stmt->execute();
 
-        $result =
-            $stmt->get_result();
+        $result = $stmt->get_result();
 
+        while ($row = $result->fetch_assoc()) {
 
-        while (
-            $row =
-            $result->fetch_assoc()
-        ) {
+            $file = "../" . $row['image_path'];
 
-            $file =
-                "../" .
-                $row['image_path'];
-
-
-            if (
-                file_exists($file)
-            ) {
-
+            if (file_exists($file)) {
                 unlink($file);
             }
         }
 
-
         $stmt->close();
     }
-
 
     /* Delete gallery */
 
@@ -319,24 +216,14 @@ if (isset($_GET['delete'])) {
          WHERE id = ?"
     );
 
-
     if ($stmt) {
 
-        $stmt->bind_param(
-            "i",
-            $id
-        );
-
+        $stmt->bind_param("i", $id);
         $stmt->execute();
-
         $stmt->close();
     }
 
-
-    header(
-        "Location: gallery.php"
-    );
-
+    header("Location: gallery.php");
     exit();
 }
 
@@ -345,45 +232,25 @@ if (isset($_GET['delete'])) {
    GET GALLERIES
 ========================================= */
 
-$galleries = false;
-
-
 $query = "
-
     SELECT
-
         g.id,
         g.title,
         g.created_at,
-
-        COUNT(i.id)
-        AS image_count,
-
-        MIN(i.image_path)
-        AS cover_image
-
+        COUNT(i.id) AS image_count,
+        MIN(i.image_path) AS cover_image
     FROM gallery_groups g
-
     LEFT JOIN gallery_images i
-
         ON g.id = i.gallery_id
-
     GROUP BY
-
         g.id,
         g.title,
         g.created_at
-
     ORDER BY
-
         g.id DESC
-
 ";
 
-
-$galleries =
-    $conn->query($query);
-
+$galleries = $conn->query($query);
 
 if (!$galleries) {
 
@@ -396,748 +263,1117 @@ if (!$galleries) {
 
 ?>
 
-
 <!DOCTYPE html>
-
 <html lang="en">
-
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <title>
-        Gallery Management - NEXUS
-    </title>
+<title>Gallery Management - NEXUS</title>
 
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
 
-    <!-- Tailwind -->
+<style>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+/* =========================================
+   GLOBAL
+========================================= */
 
+* {
+    box-sizing: border-box;
+}
 
-    <!-- Font Awesome -->
+html {
+    scroll-behavior: smooth;
+}
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
+body {
 
+    margin: 0;
 
-    <style>
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 
-        /* =========================================
-           GLOBAL
-        ========================================= */
+    background:
+        linear-gradient(
+            135deg,
+            #faf7ff 0%,
+            #f3edff 50%,
+            #f8f4ff 100%
+        );
 
-        * {
-            box-sizing: border-box;
-        }
+    color: #3f3650;
+}
 
 
-        body {
+/* =========================================
+   SIDEBAR
+========================================= */
 
-            background:
+.sidebar {
 
-                radial-gradient(
-                    circle at 85% 0%,
-                    rgba(139, 92, 246, 0.15),
-                    transparent 30%
-                ),
+    position: fixed;
 
-                radial-gradient(
-                    circle at 10% 85%,
-                    rgba(59, 130, 246, 0.08),
-                    transparent 30%
-                ),
+    left: 0;
+    top: 0;
 
-                #f7f5ff;
+    width: 250px;
+    height: 100vh;
 
-            color: #29213d;
+    background: #ffffff;
 
-        }
+    border-right:
+        1px solid #eadff5;
 
+    padding: 28px 18px;
 
-        /* =========================================
-           SIDEBAR
-        ========================================= */
+    display: flex;
+    flex-direction: column;
 
-        aside {
+    z-index: 100;
 
-            background:
-                rgba(255, 255, 255, 0.94)
-                !important;
+    box-shadow:
+        5px 0 25px
+        rgba(104, 67, 145, 0.06);
+}
 
-            border-right:
-                1px solid
-                rgba(124, 58, 237, 0.12)
-                !important;
 
-            box-shadow:
-                5px 0 25px
-                rgba(88, 28, 135, 0.06);
+/* LOGO */
 
-        }
+.logo {
 
+    padding:
+        0 12px;
 
-        /* NEXUS LOGO */
+    margin-bottom:
+        40px;
+}
 
-        aside h1 {
+.logo h1 {
 
-            background:
+    margin: 0;
 
-                linear-gradient(
-                    90deg,
-                    #2563eb,
-                    #7c3aed,
-                    #a21caf
-                );
+    font-size: 32px;
 
-            -webkit-background-clip: text;
+    font-weight: 800;
 
-            background-clip: text;
+    background:
+        linear-gradient(
+            90deg,
+            #6d28d9,
+            #9333ea
+        );
 
-            color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
 
-        }
+    color: transparent;
+}
 
+.logo p {
 
-        aside p {
+    margin:
+        4px 0 0;
 
-            color:
-                #8b8296
-                !important;
+    color: #958ba2;
 
-        }
+    font-size: 13px;
 
+    letter-spacing: .5px;
+}
 
-        /* SIDEBAR LINKS */
 
-        aside nav a {
+/* NAV */
 
-            color:
-                #5b526b
-                !important;
+.nav {
 
-            transition:
-                all 0.25s ease;
+    display: flex;
 
-        }
+    flex-direction: column;
 
+    gap: 7px;
+}
 
-        aside nav a:hover {
+.nav a {
 
-            background:
-                rgba(
-                    124,
-                    58,
-                    237,
-                    0.08
-                )
-                !important;
+    display: flex;
 
-            color:
-                #6d28d9
-                !important;
+    align-items: center;
 
-            transform:
-                translateX(3px);
+    gap: 13px;
 
-        }
+    padding:
+        13px 15px;
 
+    border-radius:
+        12px;
 
-        /* ACTIVE LINK */
+    text-decoration: none;
 
-        aside nav a.bg-purple-600\/30 {
+    color: #62586e;
 
-            background:
+    font-size: 15px;
 
-                linear-gradient(
-                    135deg,
-                    rgba(
-                        124,
-                        58,
-                        237,
-                        0.14
-                    ),
-                    rgba(
-                        168,
-                        85,
-                        247,
-                        0.07
-                    )
-                )
-                !important;
+    transition:
+        all .2s ease;
+}
 
-            color:
-                #6d28d9
-                !important;
+.nav a i {
 
-            border:
-                1px solid
-                rgba(
-                    124,
-                    58,
-                    237,
-                    0.18
-                )
-                !important;
+    width: 20px;
 
-        }
+    text-align: center;
 
+    color: #7652a8;
+}
 
-        /* LOGOUT */
+.nav a:hover {
 
-        aside .absolute a {
+    background:
+        #f5effc;
 
-            background:
-                rgba(
-                    239,
-                    68,
-                    68,
-                    0.06
-                )
-                !important;
+    color:
+        #6d28d9;
 
-            color:
-                #dc2626
-                !important;
+    transform:
+        translateX(2px);
+}
 
-            border:
-                1px solid
-                rgba(
-                    239,
-                    68,
-                    68,
-                    0.08
-                );
+.nav a.active {
 
-        }
+    background:
+        linear-gradient(
+            135deg,
+            #f1e5ff,
+            #f8f1ff
+        );
 
+    color:
+        #6d28d9;
 
-        aside .absolute a:hover {
+    border:
+        1px solid #dfc8fa;
 
-            background:
-                rgba(
-                    239,
-                    68,
-                    68,
-                    0.11
-                )
-                !important;
+    font-weight: 600;
+}
 
-        }
+.nav a.active i {
 
+    color:
+        #7c3aed;
+}
 
-        /* =========================================
-           MAIN
-        ========================================= */
 
-        main {
+/* LOGOUT */
 
-            background:
-                transparent;
+.logout {
 
-        }
+    margin-top:
+        auto;
+}
 
+.logout a {
 
-        /* PAGE TITLE */
+    display: flex;
 
-        main h2 {
+    align-items: center;
 
-            background:
+    justify-content: center;
 
-                linear-gradient(
-                    90deg,
-                    #2563eb,
-                    #7c3aed,
-                    #9333ea
-                );
+    gap: 10px;
 
-            -webkit-background-clip: text;
+    padding: 12px;
 
-            background-clip: text;
+    border-radius: 11px;
 
-            color: transparent;
+    text-decoration: none;
 
-        }
+    color: #dc3f4d;
 
+    background: #fff5f5;
 
-        /* =========================================
-           GLASS CARDS
-        ========================================= */
+    border:
+        1px solid #f8dede;
 
-        .glass {
+    font-weight: 600;
 
-            background:
-                rgba(
-                    255,
-                    255,
-                    255,
-                    0.90
-                )
-                !important;
+    transition: .2s;
+}
 
-            backdrop-filter:
-                blur(15px);
+.logout a:hover {
 
-            border:
-                1px solid
-                rgba(
-                    124,
-                    58,
-                    237,
-                    0.10
-                )
-                !important;
+    background:
+        #ffeded;
+}
 
-            box-shadow:
 
-                0 10px 35px
-                rgba(
-                    76,
-                    29,
-                    149,
-                    0.07
-                );
+/* =========================================
+   MAIN
+========================================= */
 
-        }
+.main {
 
+    margin-left:
+        250px;
 
-        .purple-glow {
+    min-height:
+        100vh;
 
-            box-shadow:
+    padding:
+        35px 45px 50px;
+}
 
-                0 12px 40px
-                rgba(
-                    124,
-                    58,
-                    237,
-                    0.10
-                );
 
-        }
+/* =========================================
+   PAGE HEADER
+========================================= */
 
+.page-header {
 
-        /* =========================================
-           HEADINGS
-        ========================================= */
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #faf6ff
+        );
 
-        main h3 {
+    border:
+        1px solid #eadff5;
 
-            color:
-                #30263f;
+    border-radius:
+        18px;
 
-        }
+    padding:
+        24px 28px;
 
+    margin-bottom:
+        25px;
 
-        main p {
+    display: flex;
 
-            color:
-                #71697f;
+    align-items: center;
 
-        }
+    justify-content: space-between;
 
+    box-shadow:
+        0 8px 28px
+        rgba(104, 67, 145, .07);
+}
 
-        label {
+.page-title {
 
-            color:
-                #4b4358
-                !important;
+    display: flex;
 
-        }
+    align-items: center;
 
+    gap: 15px;
+}
 
-        /* =========================================
-           INPUTS
-        ========================================= */
+.page-icon {
 
-        input[type="text"],
-        input[type="file"] {
+    width: 52px;
+    height: 52px;
 
-            background:
-                #faf9ff
-                !important;
+    border-radius:
+        14px;
 
-            color:
-                #30263f
-                !important;
+    background:
+        #f0e4ff;
 
-            border:
-                1px solid
-                #e5def5
-                !important;
+    color:
+        #7c3aed;
 
-            transition:
-                all 0.25s ease;
+    display: flex;
 
-        }
+    align-items: center;
 
+    justify-content: center;
 
-        input[type="text"]:focus,
-        input[type="file"]:focus {
+    font-size: 22px;
+}
 
-            border-color:
-                #8b5cf6
-                !important;
+.page-header h2 {
 
-            box-shadow:
+    margin: 0;
 
-                0 0 0 3px
-                rgba(
-                    139,
-                    92,
-                    246,
-                    0.10
-                );
+    font-size: 30px;
 
-            background:
-                #ffffff
-                !important;
+    color:
+        #6326a3;
+}
 
-        }
+.page-header p {
 
+    margin:
+        5px 0 0;
 
-        input::placeholder {
+    color:
+        #81778e;
 
-            color:
-                #aaa1b5
-                !important;
+    font-size:
+        14px;
+}
 
-        }
 
+/* =========================================
+   ADD BUTTON
+========================================= */
 
-        input[type="file"] {
+.header-add-btn {
 
-            color:
-                #655d70
-                !important;
+    text-decoration: none;
 
-        }
+    background:
+        linear-gradient(
+            135deg,
+            #8b5cf6,
+            #9333ea
+        );
 
+    color:
+        white;
 
-        /* =========================================
-           ADD BUTTON
-        ========================================= */
+    padding:
+        12px 18px;
 
-        button[type="submit"] {
+    border-radius:
+        10px;
 
-            background:
+    font-weight:
+        600;
 
-                linear-gradient(
-                    135deg,
-                    #6366f1,
-                    #7c3aed,
-                    #9333ea
-                )
-                !important;
+    box-shadow:
+        0 7px 18px
+        rgba(124,58,237,.18);
+}
 
-            box-shadow:
 
-                0 8px 20px
-                rgba(
-                    124,
-                    58,
-                    237,
-                    0.18
-                );
+/* =========================================
+   MESSAGE
+========================================= */
 
-            transition:
-                all 0.25s ease;
+.message {
 
-        }
+    padding:
+        14px 18px;
 
+    border-radius:
+        11px;
 
-        button[type="submit"]:hover {
+    margin-bottom:
+        22px;
 
-            transform:
-                translateY(-2px);
+    font-size:
+        14px;
 
-            box-shadow:
+    font-weight:
+        600;
+}
 
-                0 12px 25px
-                rgba(
-                    124,
-                    58,
-                    237,
-                    0.25
-                );
+.message.success {
 
-        }
+    background:
+        #ecfdf3;
 
+    border:
+        1px solid #c8efd7;
 
-        /* =========================================
-           SUCCESS MESSAGE
-        ========================================= */
+    color:
+        #16803c;
+}
 
-        .message-success {
+.message.error {
 
-            background:
-                rgba(
-                    34,
-                    197,
-                    94,
-                    0.08
-                );
+    background:
+        #fff1f1;
 
-            border:
-                1px solid
-                rgba(
-                    34,
-                    197,
-                    94,
-                    0.18
-                );
+    border:
+        1px solid #f4cccc;
 
-            color:
-                #15803d;
+    color:
+        #d32f2f;
+}
 
-        }
 
+/* =========================================
+   CARD
+========================================= */
 
-        /* =========================================
-           ERROR MESSAGE
-        ========================================= */
+.card {
 
-        .message-error {
+    background:
+        rgba(255,255,255,.96);
 
-            background:
-                rgba(
-                    239,
-                    68,
-                    68,
-                    0.07
-                );
+    border:
+        1px solid #eadff5;
 
-            border:
-                1px solid
-                rgba(
-                    239,
-                    68,
-                    68,
-                    0.16
-                );
+    border-radius:
+        18px;
 
-            color:
-                #dc2626;
+    box-shadow:
+        0 8px 28px
+        rgba(104,67,145,.07);
+}
 
-        }
 
+/* =========================================
+   ADD GALLERY
+========================================= */
 
-        /* =========================================
-           GALLERY CARD
-        ========================================= */
+.add-card {
 
-        .gallery-card {
+    padding:
+        27px;
 
-            background:
-                rgba(
-                    255,
-                    255,
-                    255,
-                    0.96
-                )
-                !important;
+    margin-bottom:
+        30px;
+}
 
-            border:
-                1px solid
-                #ece7f7
-                !important;
+.card-heading {
 
-            box-shadow:
+    display: flex;
 
-                0 8px 25px
-                rgba(
-                    76,
-                    29,
-                    149,
-                    0.07
-                );
+    align-items: center;
 
-            transition:
-                all 0.3s ease;
+    gap: 13px;
 
-        }
+    margin-bottom:
+        25px;
+}
 
+.card-heading-icon {
 
-        .gallery-card:hover {
+    width: 46px;
+    height: 46px;
 
-            transform:
-                translateY(-6px);
+    border-radius:
+        13px;
 
-            box-shadow:
+    background:
+        #f0e5ff;
 
-                0 18px 40px
-                rgba(
-                    76,
-                    29,
-                    149,
-                    0.13
-                );
+    color:
+        #7c3aed;
 
-        }
+    display: flex;
 
+    align-items: center;
 
-        .gallery-card img {
+    justify-content: center;
 
-            transition:
-                transform 0.4s ease;
+    font-size:
+        19px;
+}
 
-        }
+.card-heading h3 {
 
+    margin: 0;
 
-        .gallery-card:hover img {
+    color:
+        #49365d;
 
-            transform:
-                scale(1.05);
+    font-size:
+        21px;
+}
 
-        }
+.card-heading p {
 
+    margin:
+        4px 0 0;
 
-        .gallery-card h4 {
+    color:
+        #8b8197;
 
-            color:
-                #30263f
-                !important;
+    font-size:
+        13px;
+}
 
-        }
 
+/* FORM */
 
-        .gallery-card p {
+.form-grid {
 
-            color:
-                #81788f
-                !important;
+    display:
+        grid;
 
-        }
+    grid-template-columns:
+        1fr 1fr;
 
+    gap:
+        20px;
+}
 
-        /* =========================================
-           DELETE BUTTON
-        ========================================= */
+.form-group {
 
-        .gallery-card a {
+    display:
+        flex;
 
-            background:
-                rgba(
-                    239,
-                    68,
-                    68,
-                    0.06
-                )
-                !important;
+    flex-direction:
+        column;
+}
 
-            color:
-                #dc2626
-                !important;
+.form-group label {
 
-            border:
-                1px solid
-                rgba(
-                    239,
-                    68,
-                    68,
-                    0.08
-                );
+    margin-bottom:
+        8px;
 
-        }
+    font-size:
+        14px;
 
+    font-weight:
+        600;
 
-        .gallery-card a:hover {
+    color:
+        #4e4559;
+}
 
-            background:
-                rgba(
-                    239,
-                    68,
-                    68,
-                    0.11
-                )
-                !important;
+.form-group input {
 
-        }
+    width:
+        100%;
 
+    height:
+        48px;
 
-        /* =========================================
-           NO GALLERY
-        ========================================= */
+    border:
+        1px solid #dfd4eb;
 
-        .no-gallery {
+    border-radius:
+        10px;
 
-            color:
-                #91889e;
+    background:
+        #fbfaff;
 
-        }
+    padding:
+        0 14px;
 
+    font-size:
+        14px;
 
-        /* =========================================
-           SCROLLBAR
-        ========================================= */
+    color:
+        #40374c;
 
-        ::-webkit-scrollbar {
+    outline:
+        none;
 
-            width:
-                8px;
+    transition:
+        .2s;
+}
 
-        }
+.form-group input:focus {
 
+    border-color:
+        #a678dc;
 
-        ::-webkit-scrollbar-track {
+    box-shadow:
+        0 0 0 3px
+        rgba(139,92,246,.09);
 
-            background:
-                #f1eff8;
+    background:
+        white;
+}
 
-        }
+.file-help {
 
+    margin-top:
+        7px;
 
-        ::-webkit-scrollbar-thumb {
+    color:
+        #91869d;
 
-            background:
+    font-size:
+        12px;
+}
 
-                linear-gradient(
-                    #8b5cf6,
-                    #6366f1
-                );
 
-            border-radius:
-                10px;
+/* BUTTON */
 
-        }
+.add-btn {
 
+    margin-top:
+        22px;
 
-        /* =========================================
-           MOBILE
-        ========================================= */
+    border:
+        none;
 
-        @media (max-width: 768px) {
+    background:
+        linear-gradient(
+            135deg,
+            #7c5ce6,
+            #9333ea
+        );
 
-            aside {
+    color:
+        white;
 
-                width:
-                    220px
-                    !important;
+    padding:
+        12px 22px;
 
-            }
+    border-radius:
+        10px;
 
-            main {
+    font-size:
+        14px;
 
-                margin-left:
-                    220px
-                    !important;
+    font-weight:
+        600;
 
-                padding:
-                    25px
-                    !important;
+    cursor:
+        pointer;
 
-            }
+    box-shadow:
+        0 7px 18px
+        rgba(124,58,237,.18);
 
-        }
+    transition:
+        .2s;
+}
 
-    </style>
+.add-btn:hover {
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 10px 24px
+        rgba(124,58,237,.25);
+}
+
+
+/* =========================================
+   COLLECTION SECTION
+========================================= */
+
+.collection-card {
+
+    padding:
+        27px;
+}
+
+.collection-header {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        13px;
+
+    margin-bottom:
+        22px;
+}
+
+.collection-header h3 {
+
+    margin:
+        0;
+
+    color:
+        #49365d;
+
+    font-size:
+        21px;
+}
+
+.collection-header p {
+
+    margin:
+        4px 0 0;
+
+    color:
+        #8b8197;
+
+    font-size:
+        13px;
+}
+
+
+/* =========================================
+   GALLERY GRID
+========================================= */
+
+.gallery-grid {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap:
+        20px;
+}
+
+
+/* =========================================
+   GALLERY CARD
+========================================= */
+
+.gallery-item {
+
+    border:
+        1px solid #ebe3f3;
+
+    border-radius:
+        14px;
+
+    overflow:
+        hidden;
+
+    background:
+        white;
+
+    transition:
+        .25s ease;
+}
+
+.gallery-item:hover {
+
+    transform:
+        translateY(-4px);
+
+    box-shadow:
+        0 12px 28px
+        rgba(91,48,126,.11);
+}
+
+
+/* IMAGE */
+
+.gallery-image {
+
+    width:
+        100%;
+
+    height:
+        180px;
+
+    background:
+        #f4effb;
+
+    overflow:
+        hidden;
+}
+
+.gallery-image img {
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    object-fit:
+        cover;
+
+    display:
+        block;
+
+    transition:
+        .3s;
+}
+
+.gallery-item:hover
+.gallery-image img {
+
+    transform:
+        scale(1.04);
+}
+
+
+/* DETAILS */
+
+.gallery-details {
+
+    padding:
+        16px;
+}
+
+.gallery-title {
+
+    margin:
+        0 0 7px;
+
+    color:
+        #4b395b;
+
+    font-size:
+        17px;
+
+    font-weight:
+        700;
+
+    white-space:
+        nowrap;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+}
+
+.gallery-meta {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    gap:
+        10px;
+}
+
+.image-count {
+
+    color:
+        #8b8197;
+
+    font-size:
+        13px;
+}
+
+.image-count i {
+
+    color:
+        #8b5cf6;
+
+    margin-right:
+        5px;
+}
+
+
+/* DELETE */
+
+.delete-btn {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    gap:
+        6px;
+
+    text-decoration:
+        none;
+
+    padding:
+        7px 10px;
+
+    border-radius:
+        8px;
+
+    background:
+        #fff2f2;
+
+    color:
+        #dc3f4d;
+
+    border:
+        1px solid #f4d5d5;
+
+    font-size:
+        12px;
+
+    font-weight:
+        600;
+
+    transition:
+        .2s;
+}
+
+.delete-btn:hover {
+
+    background:
+        #dc3f4d;
+
+    color:
+        white;
+
+    border-color:
+        #dc3f4d;
+}
+
+
+/* =========================================
+   EMPTY
+========================================= */
+
+.empty {
+
+    text-align:
+        center;
+
+    padding:
+        60px 20px;
+
+    border:
+        1px dashed #d9cbe7;
+
+    border-radius:
+        14px;
+
+    background:
+        #fcfaff;
+
+    color:
+        #958aa2;
+}
+
+.empty i {
+
+    font-size:
+        45px;
+
+    color:
+        #c8b2df;
+
+    margin-bottom:
+        12px;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 1100px) {
+
+    .gallery-grid {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 850px) {
+
+    .sidebar {
+
+        width:
+            220px;
+    }
+
+    .main {
+
+        margin-left:
+            220px;
+
+        padding:
+            25px;
+    }
+
+    .form-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    .page-header {
+
+        align-items:
+            flex-start;
+
+        flex-direction:
+            column;
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .sidebar {
+
+        position:
+            relative;
+
+        width:
+            100%;
+
+        height:
+            auto;
+
+        min-height:
+            auto;
+    }
+
+    .logo {
+
+        margin-bottom:
+            20px;
+    }
+
+    .nav {
+
+        display:
+            grid;
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+    .logout {
+
+        margin-top:
+            25px;
+    }
+
+    .main {
+
+        margin-left:
+            0;
+
+        padding:
+            18px;
+    }
+
+    .gallery-grid {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    .page-header {
+
+        padding:
+            20px;
+    }
+
+    .page-header h2 {
+
+        font-size:
+            24px;
+    }
+
+    .add-card,
+    .collection-card {
+
+        padding:
+            20px;
+    }
+}
+
+</style>
 
 </head>
 
@@ -1149,161 +1385,74 @@ if (!$galleries) {
      SIDEBAR
 ========================================= -->
 
-<aside
-    class="
-        fixed
-        left-0
-        top-0
-        h-full
-        w-64
-        p-6
-        z-50
-    "
->
+<aside class="sidebar">
 
+    <div class="logo">
 
-    <!-- LOGO -->
+        <h1>NEXUS</h1>
 
-    <div class="mb-10">
-
-        <h1
-            class="
-                text-3xl
-                font-bold
-            "
-        >
-
-            NEXUS
-
-        </h1>
-
-
-        <p
-            class="
-                text-sm
-                mt-1
-            "
-        >
-
-            ADMIN PANEL
-
-        </p>
+        <p>ADMIN PANEL</p>
 
     </div>
 
 
-    <!-- NAVIGATION -->
+    <nav class="nav">
 
-    <nav class="space-y-3">
+        <a href="dashboard.php">
 
+            <i class="fa-solid fa-house"></i>
 
-        <a
-            href="dashboard.php"
-            class="
-                block
-                px-4
-                py-3
-                rounded-xl
-            "
-        >
-
-            🏠 Dashboard
+            <span>Dashboard</span>
 
         </a>
 
 
-        <a
-            href="events.php"
-            class="
-                block
-                px-4
-                py-3
-                rounded-xl
-            "
-        >
+        <a href="events.php">
 
-            📅 Events
+            <i class="fa-solid fa-calendar-days"></i>
+
+            <span>Events</span>
 
         </a>
 
 
-        <a
-            href="achievements.php"
-            class="
-                block
-                px-4
-                py-3
-                rounded-xl
-            "
-        >
+        <a href="achievements.php">
 
-            🏆 Achievements
+            <i class="fa-solid fa-trophy"></i>
+
+            <span>Achievements</span>
 
         </a>
 
 
-        <a
-            href="office_bearers.php"
-            class="
-                block
-                px-4
-                py-3
-                rounded-xl
-            "
-        >
+        <a href="office_bearers.php">
 
-            👥 Office Bearers
+            <i class="fa-solid fa-users"></i>
+
+            <span>Office Bearers</span>
 
         </a>
 
 
         <a
             href="gallery.php"
-            class="
-                block
-                px-4
-                py-3
-                rounded-xl
-                bg-purple-600/30
-            "
+            class="active"
         >
 
-            🖼️ Gallery
+            <i class="fa-regular fa-image"></i>
+
+            <span>Gallery</span>
 
         </a>
-
 
     </nav>
 
 
-    <!-- LOGOUT -->
+    <div class="logout">
 
-    <div
-        class="
-            absolute
-            bottom-6
-            left-6
-            right-6
-        "
-    >
+        <a href="logout.php">
 
-        <a
-            href="logout.php"
-            class="
-                block
-                text-center
-                px-4
-                py-3
-                rounded-xl
-            "
-        >
-
-            <i
-                class="
-                    fa-solid
-                    fa-right-from-bracket
-                "
-            ></i>
+            <i class="fa-solid fa-right-from-bracket"></i>
 
             Logout
 
@@ -1311,91 +1460,78 @@ if (!$galleries) {
 
     </div>
 
-
 </aside>
 
 
 <!-- =========================================
-     MAIN CONTENT
+     MAIN
 ========================================= -->
 
-<main
-    class="
-        ml-64
-        p-10
-    "
->
+<main class="main">
 
 
     <!-- PAGE HEADER -->
 
-    <div class="mb-10">
+    <section class="page-header">
+
+        <div class="page-title">
+
+            <div class="page-icon">
+
+                <i class="fa-regular fa-images"></i>
+
+            </div>
+
+            <div>
+
+                <h2>Gallery Management</h2>
+
+                <p>
+                    Upload and manage images for the gallery collection.
+                </p>
+
+            </div>
+
+        </div>
 
 
-        <h2
-            class="
-                text-4xl
-                font-bold
-            "
+        <a
+            href="#add-gallery"
+            class="header-add-btn"
         >
 
-            Gallery Management
+            <i class="fa-solid fa-plus"></i>
 
-        </h2>
+            &nbsp; Add Gallery
 
+        </a>
 
-        <p
-            class="
-                mt-2
-            "
-        >
-
-            Add and manage department gallery collections.
-
-        </p>
+    </section>
 
 
-    </div>
-
-
-    <!-- =========================================
-         MESSAGE
-    ========================================= -->
+    <!-- MESSAGE -->
 
     <?php if ($message !== ""): ?>
 
         <div
-            class="
-                mb-8
-                px-5
-                py-4
-                rounded-xl
-
-                <?php
-
-                if (
-                    $message_type === "success"
-                ) {
-
-                    echo "message-success";
-
-                } else {
-
-                    echo "message-error";
-
-                }
-
-                ?>
-            "
+            class="message
+            <?= $message_type === 'success'
+                ? 'success'
+                : 'error'
+            ?>"
         >
 
-            <?php
+            <i
+                class="fa-solid
+                <?= $message_type === 'success'
+                    ? 'fa-circle-check'
+                    : 'fa-circle-exclamation'
+                ?>"
+            ></i>
 
-            echo htmlspecialchars(
-                $message
-            );
+            &nbsp;
 
-            ?>
+            <?= htmlspecialchars($message) ?>
 
         </div>
 
@@ -1403,73 +1539,28 @@ if (!$galleries) {
 
 
     <!-- =========================================
-         ADD NEW GALLERY
+         ADD GALLERY
     ========================================= -->
 
-    <div
-        class="
-            glass
-            purple-glow
-            rounded-2xl
-            p-8
-            mb-12
-        "
+    <section
+        id="add-gallery"
+        class="card add-card"
     >
 
+        <div class="card-heading">
 
-        <!-- TITLE -->
+            <div class="card-heading-icon">
 
-        <div
-            class="
-                flex
-                items-center
-                gap-3
-                mb-7
-            "
-        >
-
-            <div
-                class="
-                    w-12
-                    h-12
-                    rounded-xl
-                    bg-purple-100
-                    flex
-                    items-center
-                    justify-center
-                    text-purple-600
-                    text-xl
-                "
-            >
-
-                🖼️
+                <i class="fa-solid fa-cloud-arrow-up"></i>
 
             </div>
 
-
             <div>
 
-                <h3
-                    class="
-                        text-2xl
-                        font-semibold
-                    "
-                >
+                <h3>Add New Gallery</h3>
 
-                    Add New Gallery
-
-                </h3>
-
-
-                <p
-                    class="
-                        text-sm
-                    "
-                >
-
-                    Create a gallery collection
-                    and upload images.
-
+                <p>
+                    Upload images to create a new gallery collection.
                 </p>
 
             </div>
@@ -1477,147 +1568,102 @@ if (!$galleries) {
         </div>
 
 
-        <!-- FORM -->
-
         <form
             method="POST"
             enctype="multipart/form-data"
-            class="space-y-6"
         >
 
-
-            <!-- GALLERY TITLE -->
-
-            <div>
-
-                <label
-                    class="
-                        block
-                        mb-2
-                        font-medium
-                    "
-                >
-
-                    Gallery Title
-
-                </label>
+            <div class="form-grid">
 
 
-                <input
-                    type="text"
-                    name="title"
-                    required
-                    placeholder="Example: 2026 Symposium"
-                    class="
-                        w-full
-                        px-4
-                        py-3
-                        rounded-xl
-                        outline-none
-                    "
-                >
+                <!-- TITLE -->
 
-            </div>
+                <div class="form-group">
 
+                    <label>
+                        Gallery Title
+                    </label>
 
-            <!-- IMAGES -->
+                    <input
+                        type="text"
+                        name="title"
+                        required
+                        placeholder="Example: 2026 Symposium"
+                    >
 
-            <div>
-
-                <label
-                    class="
-                        block
-                        mb-2
-                        font-medium
-                    "
-                >
-
-                    Select Images
-
-                </label>
+                </div>
 
 
-                <input
-                    type="file"
-                    name="images[]"
-                    multiple
-                    required
-                    accept=".jpg,.jpeg,.png,.webp"
-                    class="
-                        w-full
-                        px-4
-                        py-3
-                        rounded-xl
-                        outline-none
-                    "
-                >
+                <!-- IMAGES -->
 
+                <div class="form-group">
 
-                <p
-                    class="
-                        text-xs
-                        mt-2
-                    "
-                >
+                    <label>
+                        Select Images
+                    </label>
 
-                    Supported formats:
-                    JPG, JPEG, PNG, WEBP
+                    <input
+                        type="file"
+                        name="images[]"
+                        multiple
+                        required
+                        accept=".jpg,.jpeg,.png,.webp"
+                    >
 
-                </p>
+                    <span class="file-help">
+
+                        Supported formats:
+                        JPG, JPEG, PNG, WEBP
+
+                    </span>
+
+                </div>
 
             </div>
 
-
-            <!-- BUTTON -->
 
             <button
                 type="submit"
                 name="add_gallery"
-                class="
-                    px-7
-                    py-3
-                    rounded-xl
-                    text-white
-                    font-semibold
-                "
+                class="add-btn"
             >
 
-                <i
-                    class="
-                        fa-solid
-                        fa-plus
-                        mr-2
-                    "
-                ></i>
+                <i class="fa-solid fa-upload"></i>
 
-                Add Gallery
+                &nbsp; Upload Gallery
 
             </button>
 
-
         </form>
 
-    </div>
+    </section>
 
 
     <!-- =========================================
-         GALLERY COLLECTIONS
+         COLLECTIONS
     ========================================= -->
 
-    <div>
+    <section class="card collection-card">
 
+        <div class="collection-header">
 
-        <h3
-            class="
-                text-2xl
-                font-semibold
-                mb-6
-            "
-        >
+            <div class="card-heading-icon">
 
-            Gallery Collections
+                <i class="fa-regular fa-images"></i>
 
-        </h3>
+            </div>
+
+            <div>
+
+                <h3>Gallery Collections</h3>
+
+                <p>
+                    View and manage your uploaded gallery images.
+                </p>
+
+            </div>
+
+        </div>
 
 
         <?php if (
@@ -1626,223 +1672,115 @@ if (!$galleries) {
         ): ?>
 
 
-            <div
-                class="
-                    grid
-                    grid-cols-1
-                    md:grid-cols-2
-                    xl:grid-cols-3
-                    gap-6
-                "
-            >
+            <div class="gallery-grid">
 
 
-                <?php
-
-                while (
+                <?php while (
                     $gallery =
                     $galleries->fetch_assoc()
-                ):
-
-                ?>
+                ): ?>
 
 
-                    <!-- GALLERY CARD -->
-
-                    <div
-                        class="
-                            gallery-card
-                            rounded-2xl
-                            overflow-hidden
-                        "
-                    >
+                    <article class="gallery-item">
 
 
                         <!-- IMAGE -->
 
-                        <div
-                            class="
-                                h-56
-                                bg-purple-50
-                                overflow-hidden
-                            "
-                        >
-
+                        <div class="gallery-image">
 
                             <?php if (
                                 !empty(
-                                    $gallery[
-                                        'cover_image'
-                                    ]
+                                    $gallery['cover_image']
                                 )
                             ): ?>
 
-
                                 <img
-                                    src="../<?php
-
-                                    echo htmlspecialchars(
-                                        $gallery[
-                                            'cover_image'
-                                        ]
-                                    );
-
-                                    ?>"
-                                    alt="<?php
-
-                                    echo htmlspecialchars(
-                                        $gallery[
-                                            'title'
-                                        ]
-                                    );
-
-                                    ?>"
-                                    class="
-                                        w-full
-                                        h-full
-                                        object-cover
-                                    "
+                                    src="../<?= htmlspecialchars(
+                                        $gallery['cover_image']
+                                    ) ?>"
+                                    alt="<?= htmlspecialchars(
+                                        $gallery['title']
+                                    ) ?>"
                                 >
-
 
                             <?php else: ?>
 
-
                                 <div
-                                    class="
-                                        w-full
-                                        h-full
-                                        flex
-                                        items-center
-                                        justify-center
-                                        no-gallery
+                                    style="
+                                        width:100%;
+                                        height:100%;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        color:#b8a8c8;
                                     "
                                 >
 
-                                    <div
-                                        class="
-                                            text-center
-                                        "
-                                    >
-
-                                        <i
-                                            class="
-                                                fa-regular
-                                                fa-image
-                                                text-4xl
-                                                mb-2
-                                            "
-                                        ></i>
-
-
-                                        <p>
-
-                                            No image
-
-                                        </p>
-
-                                    </div>
+                                    <i
+                                        class="fa-regular fa-image"
+                                        style="font-size:42px;"
+                                    ></i>
 
                                 </div>
 
-
                             <?php endif; ?>
-
 
                         </div>
 
 
                         <!-- DETAILS -->
 
-                        <div
-                            class="
-                                p-5
-                            "
-                        >
+                        <div class="gallery-details">
 
+                            <h4 class="gallery-title">
 
-                            <h4
-                                class="
-                                    text-lg
-                                    font-semibold
-                                    mb-2
-                                "
-                            >
-
-                                <?php
-
-                                echo htmlspecialchars(
-                                    $gallery[
-                                        'title'
-                                    ]
-                                );
-
-                                ?>
+                                <?= htmlspecialchars(
+                                    $gallery['title']
+                                ) ?>
 
                             </h4>
 
 
-                            <p
-                                class="
-                                    text-sm
-                                    mb-5
-                                "
-                            >
+                            <div class="gallery-meta">
 
-                                <?php
+                                <span class="image-count">
 
-                                echo (int)
-                                    $gallery[
-                                        'image_count'
-                                    ];
+                                    <i
+                                        class="fa-regular fa-images"
+                                    ></i>
 
-                                ?>
+                                    <?= (int)
+                                        $gallery['image_count']
+                                    ?>
 
-                                image(s)
+                                    image(s)
 
-                            </p>
+                                </span>
 
 
-                            <!-- DELETE -->
-
-                            <a
-                                href="gallery.php?delete=<?php
-
-                                echo (int)
-                                    $gallery['id'];
-
-                                ?>"
-                                onclick="
-                                    return confirm(
-                                        'Are you sure you want to delete this gallery?'
-                                    );
-                                "
-                                class="
-                                    inline-flex
-                                    items-center
-                                    gap-2
-                                    px-4
-                                    py-2
-                                    rounded-lg
-                                "
-                            >
-
-                                <i
-                                    class="
-                                        fa-solid
-                                        fa-trash
+                                <a
+                                    href="gallery.php?delete=<?= (int)$gallery['id'] ?>"
+                                    class="delete-btn"
+                                    onclick="
+                                        return confirm(
+                                            'Are you sure you want to delete this gallery?'
+                                        );
                                     "
-                                ></i>
+                                >
 
-                                Delete
+                                    <i
+                                        class="fa-solid fa-trash"
+                                    ></i>
 
-                            </a>
+                                    Delete
 
+                                </a>
+
+                            </div>
 
                         </div>
 
-
-                    </div>
+                    </article>
 
 
                 <?php endwhile; ?>
@@ -1854,46 +1792,20 @@ if (!$galleries) {
         <?php else: ?>
 
 
-            <!-- NO GALLERIES -->
+            <div class="empty">
 
-            <div
-                class="
-                    glass
-                    rounded-2xl
-                    p-12
-                    text-center
-                "
-            >
+                <i class="fa-regular fa-images"></i>
 
-                <i
-                    class="
-                        fa-regular
-                        fa-images
-                        text-5xl
-                        text-purple-200
-                        mb-5
-                    "
-                ></i>
-
-
-                <p
-                    class="
-                        text-gray-500
-                    "
-                >
-
+                <div>
                     No gallery collections found.
-
-                </p>
-
+                </div>
 
             </div>
 
 
         <?php endif; ?>
 
-
-    </div>
+    </section>
 
 
 </main>

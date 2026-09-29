@@ -7,11 +7,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     exit();
 }
 
-/*
-|--------------------------------------------------------------------------
-| Database Connection
-|--------------------------------------------------------------------------
-*/
 require_once "../server/config/db.php";
 
 $message = "";
@@ -19,18 +14,49 @@ $error = "";
 
 /*
 |--------------------------------------------------------------------------
-| Add Achievement
+| DELETE ACHIEVEMENT
 |--------------------------------------------------------------------------
 */
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
+if (isset($_GET['delete'])) {
 
-    $date_duration     = trim($_POST['date_duration'] ?? '');
-    $student           = trim($_POST['student'] ?? '');
-    $year_department   = trim($_POST['year_department'] ?? '');
-    $activity_event    = trim($_POST['activity_event'] ?? '');
-    $achievement_role  = trim($_POST['achievement_role'] ?? '');
-    $organization      = trim($_POST['organization_venue'] ?? '');
-    $academic_year     = trim($_POST['academic_year'] ?? '');
+    $delete_id = intval($_GET['delete']);
+
+    if ($delete_id > 0) {
+
+        $stmt = $conn->prepare("DELETE FROM academic_achievements WHERE id = ?");
+
+        if ($stmt) {
+
+            $stmt->bind_param("i", $delete_id);
+
+            if ($stmt->execute()) {
+                $message = "Achievement deleted successfully!";
+            } else {
+                $error = "Failed to delete achievement.";
+            }
+
+            $stmt->close();
+
+        } else {
+            $error = "Database error: " . $conn->error;
+        }
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| ADD ACHIEVEMENT
+|--------------------------------------------------------------------------
+*/
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['add_achievement'])) {
+
+    $date_duration    = trim($_POST['date_duration'] ?? '');
+    $student          = trim($_POST['student'] ?? '');
+    $year_department  = trim($_POST['year_department'] ?? '');
+    $activity_event   = trim($_POST['activity_event'] ?? '');
+    $achievement_role = trim($_POST['achievement_role'] ?? '');
+    $organization     = trim($_POST['organization_venue'] ?? '');
+    $academic_year    = trim($_POST['academic_year'] ?? '');
 
     if (
         $date_duration === "" ||
@@ -74,18 +100,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
 
             if ($stmt->execute()) {
-
                 $message = "Achievement added successfully!";
-
             } else {
-
                 $error = "Failed to add achievement: " . $stmt->error;
             }
 
             $stmt->close();
 
         } else {
-
             $error = "Database error: " . $conn->error;
         }
     }
@@ -93,7 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 /*
 |--------------------------------------------------------------------------
-| Fetch Existing Achievements
+| FETCH ACHIEVEMENTS
 |--------------------------------------------------------------------------
 */
 $result = $conn->query("
@@ -105,339 +127,428 @@ $result = $conn->query("
 ?>
 
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
+<meta charset="UTF-8">
 
-    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Achievements - NEXUS Admin</title>
 
-    <title>Achievements - NEXUS Admin</title>
+<link rel="stylesheet" href="css/admin.css">
 
-    <link rel="stylesheet" href="css/admin.css">
+<style>
 
-    <style>
+    * {
+        box-sizing: border-box;
+    }
 
-        body {
-            background: #f5f1f7;
-        }
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f7f1fa;
+        color: #333;
+    }
+
+    .admin-page {
+        min-height: 100vh;
+        padding: 30px;
+    }
+
+    .page-container {
+        max-width: 1350px;
+        margin: auto;
+    }
+
+    /* =========================
+       TOP BAR
+    ========================= */
+
+    .topbar {
+        background: #ffffff;
+        padding: 20px 25px;
+        border-radius: 16px;
+
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        margin-bottom: 25px;
+
+        border: 1px solid #eadcf0;
+
+        box-shadow: 0 5px 18px rgba(104, 8, 139, 0.07);
+    }
+
+    .topbar h1 {
+        margin: 0 0 5px;
+        color: #7b2c91;
+        font-size: 28px;
+    }
+
+    .topbar p {
+        margin: 0;
+        color: #777;
+        font-size: 14px;
+    }
+
+    .back-btn {
+        text-decoration: none;
+        color: #ffffff;
+        background: #a85bbb;
+
+        padding: 11px 18px;
+        border-radius: 9px;
+
+        font-weight: bold;
+
+        transition: 0.2s;
+    }
+
+    .back-btn:hover {
+        background: #9146a5;
+    }
+
+    /* =========================
+       MESSAGES
+    ========================= */
+
+    .success-message {
+        background: #eaf8ef;
+        color: #238443;
+
+        padding: 14px 18px;
+        border-radius: 10px;
+
+        margin-bottom: 20px;
+
+        font-weight: bold;
+        border: 1px solid #c9ecd5;
+    }
+
+    .error-message {
+        background: #fff0f0;
+        color: #c62828;
+
+        padding: 14px 18px;
+        border-radius: 10px;
+
+        margin-bottom: 20px;
+
+        font-weight: bold;
+        border: 1px solid #ffd0d0;
+    }
+
+    /* =========================
+       FORM CARD
+    ========================= */
+
+    .form-card,
+    .list-card {
+        background: #ffffff;
+
+        padding: 28px;
+
+        border-radius: 16px;
+
+        border: 1px solid #eadcf0;
+
+        box-shadow: 0 5px 18px rgba(104, 8, 139, 0.07);
+    }
+
+    .form-card {
+        margin-bottom: 25px;
+    }
+
+    .form-card h2,
+    .list-card h2 {
+        margin: 0 0 22px;
+        color: #7b2c91;
+        font-size: 21px;
+    }
+
+    /* =========================
+       FORM
+    ========================= */
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group.full {
+        grid-column: 1 / -1;
+    }
+
+    .form-group label {
+        margin-bottom: 7px;
+
+        font-weight: 600;
+        color: #444;
+
+        font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+
+        width: 100%;
+
+        padding: 12px 13px;
+
+        border: 1px solid #ddd1e3;
+
+        border-radius: 8px;
+
+        font-size: 14px;
+
+        outline: none;
+
+        font-family: Arial, sans-serif;
+
+        background: #fff;
+
+        transition: 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+
+        border-color: #b66ac5;
+
+        box-shadow: 0 0 0 3px rgba(182, 106, 197, 0.12);
+    }
+
+    .form-group textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    /* =========================
+       ADD BUTTON
+    ========================= */
+
+    .submit-btn {
+
+        margin-top: 20px;
+
+        padding: 12px 22px;
+
+        border: none;
+
+        border-radius: 8px;
+
+        background: #a85bbb;
+
+        color: white;
+
+        font-size: 14px;
+
+        font-weight: bold;
+
+        cursor: pointer;
+
+        transition: 0.2s;
+    }
+
+    .submit-btn:hover {
+        background: #9146a5;
+        transform: translateY(-1px);
+    }
+
+    /* =========================
+       TABLE
+    ========================= */
+
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+
+        min-width: 1100px;
+
+        overflow: hidden;
+    }
+
+    table th {
+
+        background: #f0e1f5;
+
+        color: #6e267f;
+
+        padding: 13px 14px;
+
+        text-align: left;
+
+        font-size: 13px;
+
+        font-weight: 700;
+
+        border-bottom: 2px solid #e2cde8;
+    }
+
+    table th:first-child {
+        border-radius: 8px 0 0 0;
+    }
+
+    table th:last-child {
+        border-radius: 0 8px 0 0;
+    }
+
+    table td {
+
+        padding: 13px 14px;
+
+        border-bottom: 1px solid #eee6f1;
+
+        color: #444;
+
+        font-size: 13px;
+
+        vertical-align: middle;
+
+        background: #ffffff;
+    }
+
+    table tbody tr:hover td {
+        background: #fcf8fd;
+    }
+
+    /* =========================
+       ID BADGE
+    ========================= */
+
+    .id-badge {
+
+        display: inline-block;
+
+        background: #f1e4f5;
+
+        color: #7b2c91;
+
+        padding: 5px 9px;
+
+        border-radius: 6px;
+
+        font-weight: bold;
+
+        font-size: 12px;
+    }
+
+    /* =========================
+       DELETE BUTTON
+    ========================= */
+
+    .delete-btn {
+
+        display: inline-block;
+
+        text-decoration: none;
+
+        background: #fff0f0;
+
+        color: #d13c3c;
+
+        border: 1px solid #f1caca;
+
+        padding: 7px 11px;
+
+        border-radius: 7px;
+
+        font-size: 12px;
+
+        font-weight: bold;
+
+        white-space: nowrap;
+
+        transition: 0.2s;
+    }
+
+    .delete-btn:hover {
+
+        background: #d13c3c;
+
+        color: #ffffff;
+
+        border-color: #d13c3c;
+    }
+
+    /* =========================
+       EMPTY
+    ========================= */
+
+    .empty-message {
+
+        padding: 30px;
+
+        text-align: center;
+
+        color: #777;
+
+        background: #faf6fc;
+
+        border: 1px dashed #dfcce5;
+
+        border-radius: 10px;
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media (max-width: 700px) {
 
         .admin-page {
-            min-height: 100vh;
-            padding: 30px;
+            padding: 15px;
         }
-
-        .page-container {
-            max-width: 1250px;
-            margin: auto;
-        }
-
-        /* TOP BAR */
 
         .topbar {
-            background: white;
-            padding: 20px 25px;
-            border-radius: 18px;
 
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
 
-            margin-bottom: 25px;
+            align-items: flex-start;
 
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            gap: 15px;
         }
 
         .topbar h1 {
-            color: #68088b;
-            margin-bottom: 5px;
-        }
-
-        .topbar p {
-            color: #777;
+            font-size: 23px;
         }
 
         .back-btn {
-            text-decoration: none;
-            color: white;
-            background: #68088b;
-
-            padding: 11px 18px;
-            border-radius: 9px;
-
-            font-weight: bold;
-        }
-
-        .back-btn:hover {
-            background: #52066e;
-        }
-
-        /* MESSAGE */
-
-        .success-message {
-            background: #e7f8ec;
-            color: #218838;
-
-            padding: 14px 18px;
-
-            border-radius: 10px;
-
-            margin-bottom: 20px;
-
-            font-weight: bold;
-        }
-
-        .error-message {
-            background: #ffe5e5;
-            color: #c62828;
-
-            padding: 14px 18px;
-
-            border-radius: 10px;
-
-            margin-bottom: 20px;
-
-            font-weight: bold;
-        }
-
-        /* FORM CARD */
-
-        .form-card {
-            background: white;
-
-            padding: 30px;
-
-            border-radius: 18px;
-
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-
-            margin-bottom: 25px;
-        }
-
-        .form-card h2 {
-            color: #68088b;
-
-            margin-bottom: 25px;
+            width: 100%;
+            text-align: center;
         }
 
         .form-grid {
-            display: grid;
-
-            grid-template-columns: 1fr 1fr;
-
-            gap: 20px;
-        }
-
-        .form-group {
-            display: flex;
-
-            flex-direction: column;
+            grid-template-columns: 1fr;
         }
 
         .form-group.full {
-            grid-column: 1 / -1;
+            grid-column: auto;
         }
 
-        .form-group label {
-            margin-bottom: 8px;
-
-            font-weight: bold;
-
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group textarea {
-
-            padding: 13px;
-
-            border: 1px solid #ddd;
-
-            border-radius: 9px;
-
-            font-size: 15px;
-
-            outline: none;
-
-            font-family: Arial, sans-serif;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-
-            border-color: #68088b;
-
-            box-shadow: 0 0 0 3px rgba(104, 8, 139, 0.08);
-        }
-
-        .form-group textarea {
-
-            min-height: 100px;
-
-            resize: vertical;
-        }
-
-        .submit-btn {
-
-            margin-top: 20px;
-
-            padding: 13px 25px;
-
-            border: none;
-
-            border-radius: 9px;
-
-            background: #68088b;
-
-            color: white;
-
-            font-size: 15px;
-
-            font-weight: bold;
-
-            cursor: pointer;
-        }
-
-        .submit-btn:hover {
-
-            background: #52066e;
-
-            transform: translateY(-1px);
-        }
-
-        /* LIST CARD */
-
+        .form-card,
         .list-card {
-
-            background: white;
-
-            padding: 30px;
-
-            border-radius: 18px;
-
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            padding: 20px;
         }
 
-        .list-card h2 {
+    }
 
-            color: #68088b;
-
-            margin-bottom: 20px;
-        }
-
-        /* TABLE */
-
-        .table-wrapper {
-
-            width: 100%;
-
-            overflow-x: auto;
-        }
-
-        table {
-
-            width: 100%;
-
-            border-collapse: collapse;
-
-            min-width: 1000px;
-        }
-
-        table th {
-
-            background: #68088b;
-
-            color: white;
-
-            padding: 14px;
-
-            text-align: left;
-
-            font-size: 14px;
-        }
-
-        table td {
-
-            padding: 13px 14px;
-
-            border-bottom: 1px solid #eee;
-
-            color: #444;
-
-            font-size: 14px;
-
-            vertical-align: top;
-        }
-
-        table tr:hover {
-
-            background: #faf7fb;
-        }
-
-        .empty-message {
-
-            padding: 30px;
-
-            text-align: center;
-
-            color: #777;
-
-            background: #faf7fb;
-
-            border-radius: 10px;
-        }
-
-        .id-badge {
-
-            background: #f0e4f4;
-
-            color: #68088b;
-
-            padding: 5px 9px;
-
-            border-radius: 6px;
-
-            font-weight: bold;
-        }
-
-        /* MOBILE */
-
-        @media (max-width: 700px) {
-
-            .admin-page {
-
-                padding: 15px;
-            }
-
-            .topbar {
-
-                flex-direction: column;
-
-                align-items: flex-start;
-
-                gap: 15px;
-            }
-
-            .form-grid {
-
-                grid-template-columns: 1fr;
-            }
-
-            .form-group.full {
-
-                grid-column: auto;
-            }
-
-            .form-card,
-            .list-card {
-
-                padding: 20px;
-            }
-
-        }
-
-    </style>
+</style>
 
 </head>
 
@@ -445,299 +556,285 @@ $result = $conn->query("
 
 <div class="admin-page">
 
-    <div class="page-container">
 
-        <!-- TOP BAR -->
+<div class="page-container">
 
-        <div class="topbar">
+    <!-- TOP BAR -->
 
-            <div>
+    <div class="topbar">
 
-                <h1>🏆 Achievements</h1>
+        <div>
 
-                <p>Manage student achievements</p>
+            <h1>🏆 Achievements</h1>
 
-            </div>
-
-            <a href="dashboard.php" class="back-btn">
-                ← Dashboard
-            </a>
+            <p>Manage student achievements</p>
 
         </div>
 
-
-        <!-- SUCCESS MESSAGE -->
-
-        <?php if ($message): ?>
-
-            <div class="success-message">
-                <?= htmlspecialchars($message) ?>
-            </div>
-
-        <?php endif; ?>
-
-
-        <!-- ERROR MESSAGE -->
-
-        <?php if ($error): ?>
-
-            <div class="error-message">
-                <?= htmlspecialchars($error) ?>
-            </div>
-
-        <?php endif; ?>
-
-
-        <!-- ADD ACHIEVEMENT FORM -->
-
-        <div class="form-card">
-
-            <h2>➕ Add New Achievement</h2>
-
-            <form method="POST">
-
-                <div class="form-grid">
-
-                    <!-- DATE -->
-
-                    <div class="form-group">
-
-                        <label>
-                            Date / Duration
-                        </label>
-
-                        <input
-                            type="text"
-                            name="date_duration"
-                            placeholder="Example: 15 March 2026"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- STUDENT -->
-
-                    <div class="form-group">
-
-                        <label>
-                            Student Name
-                        </label>
-
-                        <input
-                            type="text"
-                            name="student"
-                            placeholder="Enter student name"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- YEAR / DEPARTMENT -->
-
-                    <div class="form-group">
-
-                        <label>
-                            Year / Department
-                        </label>
-
-                        <input
-                            type="text"
-                            name="year_department"
-                            placeholder="Example: III Year - CSE"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- ACADEMIC YEAR -->
-
-                    <div class="form-group">
-
-                        <label>
-                            Academic Year
-                        </label>
-
-                        <input
-                            type="text"
-                            name="academic_year"
-                            value="2025-2026"
-                            placeholder="Example: 2025-2026"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- ACTIVITY / EVENT -->
-
-                    <div class="form-group full">
-
-                        <label>
-                            Activity / Event
-                        </label>
-
-                        <input
-                            type="text"
-                            name="activity_event"
-                            placeholder="Example: Hackathon, Paper Presentation, Sports Meet"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- ACHIEVEMENT / ROLE -->
-
-                    <div class="form-group full">
-
-                        <label>
-                            Achievement / Role
-                        </label>
-
-                        <input
-                            type="text"
-                            name="achievement_role"
-                            placeholder="Example: First Prize / Winner / Participant"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- ORGANIZATION -->
-
-                    <div class="form-group full">
-
-                        <label>
-                            Organization / Venue
-                        </label>
-
-                        <input
-                            type="text"
-                            name="organization_venue"
-                            placeholder="Enter organization or venue"
-                            required
-                        >
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    type="submit"
-                    class="submit-btn"
-                >
-                    + Add Achievement
-                </button>
-
-            </form>
-
-        </div>
-
-
-        <!-- EXISTING ACHIEVEMENTS -->
-
-        <div class="list-card">
-
-            <h2>📋 Existing Achievements</h2>
-
-            <?php if ($result && $result->num_rows > 0): ?>
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-
-                            <tr>
-
-                                <th>ID</th>
-
-                                <th>Date / Duration</th>
-
-                                <th>Student</th>
-
-                                <th>Year / Department</th>
-
-                                <th>Activity / Event</th>
-
-                                <th>Achievement / Role</th>
-
-                                <th>Organization / Venue</th>
-
-                                <th>Academic Year</th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                        <?php while ($row = $result->fetch_assoc()): ?>
-
-                            <tr>
-
-                                <td>
-                                    <span class="id-badge">
-                                        <?= htmlspecialchars($row['id']) ?>
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($row['date_duration']) ?>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($row['student']) ?>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($row['year_department']) ?>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($row['activity_event']) ?>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($row['achievement_role']) ?>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($row['organization_venue']) ?>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($row['academic_year']) ?>
-                                </td>
-
-                            </tr>
-
-                        <?php endwhile; ?>
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            <?php else: ?>
-
-                <div class="empty-message">
-
-                    No achievements found.
-
-                </div>
-
-            <?php endif; ?>
-
-        </div>
+        <a href="dashboard.php" class="back-btn">
+            ← Dashboard
+        </a>
 
     </div>
+
+
+    <!-- SUCCESS -->
+
+    <?php if ($message): ?>
+
+        <div class="success-message">
+            <?= htmlspecialchars($message) ?>
+        </div>
+
+    <?php endif; ?>
+
+
+    <!-- ERROR -->
+
+    <?php if ($error): ?>
+
+        <div class="error-message">
+            <?= htmlspecialchars($error) ?>
+        </div>
+
+    <?php endif; ?>
+
+
+    <!-- ADD ACHIEVEMENT -->
+
+    <div class="form-card">
+
+        <h2>➕ Add New Achievement</h2>
+
+        <form method="POST">
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>Date / Duration</label>
+
+                    <input
+                        type="text"
+                        name="date_duration"
+                        placeholder="Example: 15 March 2026"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Student Name</label>
+
+                    <input
+                        type="text"
+                        name="student"
+                        placeholder="Enter student name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Year / Department</label>
+
+                    <input
+                        type="text"
+                        name="year_department"
+                        placeholder="Example: III Year - CSE"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Academic Year</label>
+
+                    <input
+                        type="text"
+                        name="academic_year"
+                        value="2025-2026"
+                        placeholder="Example: 2025-2026"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label>Activity / Event</label>
+
+                    <input
+                        type="text"
+                        name="activity_event"
+                        placeholder="Example: Hackathon, Paper Presentation, Sports Meet"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label>Achievement / Role</label>
+
+                    <input
+                        type="text"
+                        name="achievement_role"
+                        placeholder="Example: First Prize / Winner / Participant"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label>Organization / Venue</label>
+
+                    <input
+                        type="text"
+                        name="organization_venue"
+                        placeholder="Enter organization or venue"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                name="add_achievement"
+                class="submit-btn"
+            >
+                + Add Achievement
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <!-- EXISTING ACHIEVEMENTS -->
+
+    <div class="list-card">
+
+        <h2>📋 Existing Achievements</h2>
+
+        <?php if ($result && $result->num_rows > 0): ?>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+
+                            <th>Date / Duration</th>
+
+                            <th>Student</th>
+
+                            <th>Year / Department</th>
+
+                            <th>Activity / Event</th>
+
+                            <th>Achievement / Role</th>
+
+                            <th>Organization / Venue</th>
+
+                            <th>Academic Year</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    <?php while ($row = $result->fetch_assoc()): ?>
+
+                        <tr>
+
+                            <td>
+                                <span class="id-badge">
+                                    <?= htmlspecialchars($row['id']) ?>
+                                </span>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($row['date_duration']) ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($row['student']) ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($row['year_department']) ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($row['activity_event']) ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($row['achievement_role']) ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($row['organization_venue']) ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($row['academic_year']) ?>
+                            </td>
+
+                            <td>
+
+                                <a
+                                    href="?delete=<?= (int)$row['id'] ?>"
+                                    class="delete-btn"
+                                    onclick="return confirm('Are you sure you want to delete this achievement?');"
+                                >
+                                    🗑 Delete
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    <?php endwhile; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <?php else: ?>
+
+            <div class="empty-message">
+                No achievements found.
+            </div>
+
+        <?php endif; ?>
+
+    </div>
+
+</div>
 
 </div>
 
