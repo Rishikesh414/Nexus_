@@ -443,55 +443,6 @@ $admin_name = $_SESSION['admin_username'] ?? 'Admin';
         }
 
         /* =========================
-           QUICK INFO
-        ========================== */
-
-        .quick-info {
-            background: linear-gradient(
-                135deg,
-                #4b075f,
-                #68088b
-            );
-
-            border-radius: 18px;
-
-            padding: 22px 25px;
-
-            color: white;
-
-            display: flex;
-            align-items: center;
-            gap: 15px;
-
-            box-shadow: 0 8px 25px rgba(75, 7, 95, 0.20);
-        }
-
-        .quick-info i {
-            width: 42px;
-            height: 42px;
-
-            border-radius: 12px;
-
-            background: rgba(255,255,255,0.15);
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            font-size: 18px;
-        }
-
-        .quick-info h4 {
-            font-size: 14px;
-            margin-bottom: 3px;
-        }
-
-        .quick-info p {
-            font-size: 12px;
-            color: #e5c9ec;
-        }
-
-        /* =========================
            RESPONSIVE
         ========================== */
 
@@ -588,10 +539,6 @@ $admin_name = $_SESSION['admin_username'] ?? 'Admin';
             .management-content h4 {
                 font-size: 15px;
             }
-
-            .quick-info {
-                padding: 18px;
-            }
         }
 
     </style>
@@ -627,11 +574,6 @@ $admin_name = $_SESSION['admin_username'] ?? 'Admin';
             <span>Achievements</span>
         </a>
 
-        <a href="office_bearers.php">
-            <i class="fa-solid fa-users"></i>
-            <span>Office Bearers</span>
-        </a>
-
         <a href="gallery.php">
             <i class="fa-solid fa-images"></i>
             <span>Gallery</span>
@@ -663,7 +605,10 @@ $admin_name = $_SESSION['admin_username'] ?? 'Admin';
 
         <div>
             <h2>Admin Dashboard</h2>
-            <p>Manage your NEXUS website content from one place.</p>
+
+            <p>
+                Manage your NEXUS website content from one place.
+            </p>
         </div>
 
         <div class="admin-profile">
@@ -794,39 +739,6 @@ $admin_name = $_SESSION['admin_username'] ?? 'Admin';
             </div>
 
         </a>
-
-
-        <!-- Office Bearers -->
-
-        <a href="office_bearers.php" class="management-card">
-
-            <div class="management-icon">
-                <i class="fa-solid fa-users"></i>
-            </div>
-
-            <div class="management-content">
-
-                <h4>Office Bearers</h4>
-
-                <p>
-                    Manage department office bearers
-                    and their profile information.
-                </p>
-
-            </div>
-
-            <div class="arrow">
-                <i class="fa-solid fa-chevron-right"></i>
-            </div>
-
-        </a>
-
-    </div>
-
-
-    <!-- Quick Info -->
-
-   
 
     </div>
 

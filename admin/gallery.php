@@ -1425,13 +1425,7 @@ body {
         </a>
 
 
-        <a href="office_bearers.php">
-
-            <i class="fa-solid fa-users"></i>
-
-            <span>Office Bearers</span>
-
-        </a>
+       
 
 
         <a
