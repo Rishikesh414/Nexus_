@@ -234,12 +234,7 @@ if (file_exists($navbarFile)) {
         data-aos="fade-up"
     >
 
-        <img
-            src="./img/ne.png"
-            alt="NEXUS"
-            class="w-28 h-28 md:w-36 md:h-36 mx-auto mb-6 object-contain"
-        >
-
+        
 
         <h1 class="text-5xl md:text-7xl font-extrabold tracking-wider">
 
