@@ -15,12 +15,13 @@ $sql = "
     SELECT
         g.id AS gallery_id,
         g.title,
+        g.year,
         i.id AS image_id,
         i.image_path
     FROM gallery_groups g
     LEFT JOIN gallery_images i
         ON g.id = i.gallery_id
-    ORDER BY g.id ASC, i.id ASC
+    ORDER BY g.year DESC, g.id DESC, i.id ASC
 ";
 
 $result = mysqli_query($conn, $sql);
@@ -40,6 +41,8 @@ if ($result) {
             $gallery[$gallery_id] = [
 
                 "title" => $row['title'],
+
+                "year" => (int)$row['year'],
 
                 "images" => []
 
@@ -105,16 +108,18 @@ if ($result) {
 
 
     <!-- =====================================================
-         ORIGINAL GALLERY CSS
+         GALLERY CSS
          ===================================================== -->
 
     <style>
 
-        /* Floating animation for nodes */
+        /* =====================================================
+           Floating animation
+           ===================================================== */
 
         @keyframes float {
 
-            0%,100% {
+            0%, 100% {
                 transform: translateY(0);
             }
 
@@ -133,7 +138,9 @@ if ($result) {
         }
 
 
-        /* Image hover effect */
+        /* =====================================================
+           Image hover effect
+           ===================================================== */
 
         .gallery-card img {
 
@@ -152,6 +159,75 @@ if ($result) {
 
             filter:
                 brightness(1.1);
+
+        }
+
+
+        /* =====================================================
+           YEAR FILTER BUTTONS
+           ===================================================== */
+
+        .year-btn {
+
+            padding: 10px 24px;
+
+            border-radius: 9999px;
+
+            background:
+                rgba(255, 255, 255, 0.08);
+
+            border:
+                1px solid rgba(168, 85, 247, 0.5);
+
+            color: white;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition:
+                all 0.3s ease;
+
+        }
+
+
+        .year-btn:hover {
+
+            background:
+                rgba(126, 34, 206, 0.7);
+
+            transform:
+                translateY(-2px);
+
+        }
+
+
+        .year-btn.active {
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #2563eb,
+                    #9333ea
+                );
+
+            border-color:
+                transparent;
+
+            box-shadow:
+                0 0 15px
+                rgba(147, 51, 234, 0.5);
+
+        }
+
+
+        /* =====================================================
+           Hidden gallery card
+           ===================================================== */
+
+        .gallery-card.hidden-card {
+
+            display: none;
 
         }
 
@@ -277,10 +353,98 @@ if ($result) {
 
 
         <!-- =================================================
+             YEAR FILTER BUTTONS
+             ================================================= -->
+
+        <div
+            class="flex
+                   flex-wrap
+                   justify-center
+                   gap-4
+                   mb-10"
+        >
+
+
+            <!-- ALL -->
+
+            <button
+                type="button"
+                class="year-btn active"
+                data-year="all"
+                onclick="filterGallery('all')"
+            >
+
+                All
+
+            </button>
+
+
+            <!-- 2023 -->
+
+            <button
+                type="button"
+                class="year-btn"
+                data-year="2023"
+                onclick="filterGallery('2023')"
+            >
+
+                2023
+
+            </button>
+
+
+            <!-- 2024 -->
+
+            <button
+                type="button"
+                class="year-btn"
+                data-year="2024"
+                onclick="filterGallery('2024')"
+            >
+
+                2024
+
+            </button>
+
+
+            <!-- 2025 -->
+
+            <button
+                type="button"
+                class="year-btn"
+                data-year="2025"
+                onclick="filterGallery('2025')"
+            >
+
+                2025
+
+            </button>
+
+
+            <!-- 2026 -->
+
+            <button
+                type="button"
+                class="year-btn"
+                data-year="2026"
+                onclick="filterGallery('2026')"
+            >
+
+                2026
+
+            </button>
+
+        </div>
+
+
+
+        <!-- =================================================
              GALLERY GRID
              ================================================= -->
 
         <div
+            id="galleryGrid"
+
             class="grid
                    grid-cols-1
                    sm:grid-cols-2
@@ -306,7 +470,9 @@ if ($result) {
                  */
 
                 if (empty($item["images"])) {
+
                     continue;
+
                 }
 
 
@@ -329,6 +495,14 @@ if ($result) {
                         'UTF-8'
                     );
 
+
+                /*
+                 * Gallery year
+                 */
+
+                $year =
+                    (int)$item["year"];
+
             ?>
 
 
@@ -348,6 +522,8 @@ if ($result) {
                            hover:scale-105
                            cursor-pointer"
 
+                    data-year="<?= $year ?>"
+
                     onclick="openModal(<?= $index ?>)"
                 >
 
@@ -356,12 +532,43 @@ if ($result) {
 
                     <img
                         src="<?= htmlspecialchars($firstImage) ?>"
+
                         alt="<?= $title ?>"
 
                         class="w-full
                                h-60
                                object-cover"
                     >
+
+
+                    <!-- =================================================
+                         YEAR BADGE
+                         ================================================= -->
+
+                    <div
+                        class="absolute
+                               top-3
+                               right-3
+
+                               bg-purple-600/90
+
+                               text-white
+
+                               text-sm
+                               font-bold
+
+                               px-3
+                               py-1
+
+                               rounded-full
+
+                               z-10"
+                    >
+
+                        <?= $year ?>
+
+                    </div>
+
 
 
                     <!-- =================================================
@@ -431,6 +638,8 @@ if ($result) {
                              ================================================= -->
 
                         <button
+                            type="button"
+
                             onclick="closeModal(<?= $index ?>)"
 
                             class="absolute
@@ -581,6 +790,133 @@ if ($result) {
 
 
 /* =========================================================
+   YEAR FILTER
+   ========================================================= */
+
+function filterGallery(year) {
+
+
+    /*
+     * Get all gallery cards
+     */
+
+    const cards =
+        document.querySelectorAll(
+            ".gallery-card"
+        );
+
+
+    /*
+     * Get all year buttons
+     */
+
+    const buttons =
+        document.querySelectorAll(
+            ".year-btn"
+        );
+
+
+    /*
+     * Remove active class
+     * from all buttons
+     */
+
+    buttons.forEach(
+        function(button) {
+
+            button.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+    /*
+     * Add active class
+     * to selected button
+     */
+
+    const activeButton =
+        document.querySelector(
+            '.year-btn[data-year="' +
+            year +
+            '"]'
+        );
+
+
+    if (activeButton) {
+
+        activeButton.classList.add(
+            "active"
+        );
+
+    }
+
+
+    /*
+     * Show / hide cards
+     */
+
+    cards.forEach(
+        function(card) {
+
+
+            const cardYear =
+                card.getAttribute(
+                    "data-year"
+                );
+
+
+            /*
+             * Show everything
+             * when All is selected
+             */
+
+            if (year === "all") {
+
+                card.classList.remove(
+                    "hidden-card"
+                );
+
+            }
+
+
+            /*
+             * Show selected year only
+             */
+
+            else if (
+                cardYear === year
+            ) {
+
+                card.classList.remove(
+                    "hidden-card"
+                );
+
+            }
+
+
+            /*
+             * Hide other years
+             */
+
+            else {
+
+                card.classList.add(
+                    "hidden-card"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+
+/* =========================================================
    OPEN MODAL
    ========================================================= */
 
@@ -591,6 +927,13 @@ function openModal(index) {
         document.getElementById(
             "modal-" + index
         );
+
+
+    if (!modal) {
+
+        return;
+
+    }
 
 
     modal.classList.remove(
@@ -673,6 +1016,13 @@ function closeModal(index) {
         );
 
 
+    if (!modal) {
+
+        return;
+
+    }
+
+
     modal.classList.remove(
         "flex"
     );
@@ -683,6 +1033,35 @@ function closeModal(index) {
     );
 
 }
+
+
+
+/* =========================================================
+   CLOSE MODAL WHEN CLICKING OUTSIDE
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target.classList.contains(
+                "bg-black/80"
+            )
+        ) {
+
+            event.target.classList.remove(
+                "flex"
+            );
+
+            event.target.classList.add(
+                "hidden"
+            );
+
+        }
+
+    }
+);
 
 </script>
 
