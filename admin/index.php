@@ -197,7 +197,7 @@ session_start();
  
             <!-- NEXUS LOGO --> 
             <div class="logo-container"> 
-                <img src="../client/assets/img/ne.png" alt="NEXUS Logo"> 
+                <img src="../client/assets/img/image (1).png" alt="NEXUS Logo"> 
             </div> 
  
             <h1>NEXUS</h1> 
