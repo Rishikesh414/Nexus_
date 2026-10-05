@@ -77,11 +77,7 @@
     <?php include("includes/navbar.php"); ?>
 
 
-    <!-- Title -->
-    <nav class="bg-gray-800 text-white p-4 text-center text-lg font-semibold">
-      NEXUS - Placements
-    </nav>
-
+  
 
     <main class="relative z-10 pt-16">
 
@@ -188,19 +184,39 @@
 
         {
           name: "Abi Gayathri.",
-          company: "PRAMON",
+          company: "PROMON SOFTWARE SOUTIONS",
           place: "Chennai",
            salary:"2.5LPA",
           img: "./assets/img/ABI GAYATHRI.jpg"
         },
          {
           name: "Sri Hari Prasath.A",
-          company:"LearLike",
+          company:"LearnLike",
           place: "Coimbatore",
            salary:"3LPA",
           img: "./assets/img/21 SRI HARI PRASATH.jpg"
+        },
+ {
+          name:"Nandhini.S" ,
+          company:"CLOUDZOO PVT LTD",
+          place: "Coimbatore",
+           salary:"2.5LPA",
+          img: "./assets/img/NANDHINI.jpg"
+        },
+         {
+          name: "Nathiya ",
+          company:"CLOUDZOO PVT LTD",
+          place: "Coimbatore",
+           salary:"2.5LPA",
+          img: "./assets/img/NATHIYA.jpg"
+        },
+         {
+          name: "Naafiya shirin",
+          company:"GEAKMINDS TECHNOLOGIES",
+          place: "CHENNAI",
+           salary:"4LPA",
+          img: "./assets/img/NAAFIYA SHIRIN.jpg"
         }
-
       ],
 
 
