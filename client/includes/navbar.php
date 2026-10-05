@@ -53,20 +53,14 @@
         </a>
 
 
-        <!-- Register -->
+        <!-- placement -->
         <a href="placement.php" class="relative group">
           Placement
           <span class="absolute left-0 -bottom-1 w-0 h-0.5 bg-purple-500 transition-all group-hover:w-full"></span>
         </a>
 
 
-        <!-- Admin Button -->
-        <a href="../admin/index.php"
-           class="flex items-center gap-2 px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white rounded-full shadow-lg shadow-purple-500/30 transition transform hover:scale-105">
-
-          <span>Admin</span>
-
-        </a>
+        
 
       </div>
 
