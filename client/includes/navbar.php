@@ -54,8 +54,8 @@
 
 
         <!-- Register -->
-        <a href="register.php" class="relative group">
-          Register
+        <a href="placement.php" class="relative group">
+          Placement
           <span class="absolute left-0 -bottom-1 w-0 h-0.5 bg-purple-500 transition-all group-hover:w-full"></span>
         </a>
 
@@ -164,9 +164,9 @@
 
 
     <!-- Register -->
-    <a href="register.php"
+    <a href="placement.php"
        class="block hover:text-purple-400">
-      Register
+      placement
     </a>
 
 

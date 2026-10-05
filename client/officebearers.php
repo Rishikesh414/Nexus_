@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,6 +39,7 @@
     }
   </style>
 </head>
+
 <body class="bg-gray-900 text-white relative">
 
   <!-- 3D Background -->
@@ -65,6 +67,7 @@
         </h2>
 
         <div class="space-y-12">
+
           <!-- President -->
           <div class="glass-card p-8" data-aos="fade-right">
             <h3 class="text-2xl font-semibold text-white mb-4">President</h3>
@@ -104,27 +107,65 @@
               <li>Support coordination between students and faculty.</li>
             </ul>
           </div>
+
         </div>
       </section>
 
       <!-- Office Bearers Section -->
       <section class="py-20 px-4 sm:px-8 md:px-[3cm] max-w-screen-xl mx-auto">
+
         <h2 class="text-4xl font-bold text-center text-purple-400 mb-8">
           Office Bearers
         </h2>
 
-        <!-- Year Buttons -->
-        <div class="flex justify-center gap-4 mb-12">
-          <button class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition" data-year="2023" aria-pressed="true">2023 - 2024</button>
-          <button class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition" data-year="2024" aria-pressed="false">2024 - 2025</button>
-          <button class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition" data-year="2025" aria-pressed="false">2025 - 2026</button>
-          <button class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition" data-year="2026" aria-pressed="false">2026 - 2027</button>
+        <!-- Year Buttons - DESCENDING ORDER -->
+        <div class="flex justify-center gap-4 mb-12 flex-wrap">
+
+          <!-- 2026-2027 FIRST -->
+          <button
+            class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition"
+            data-year="2026"
+            aria-pressed="true">
+            2026 - 2027
+          </button>
+
+          <!-- 2025-2026 SECOND -->
+          <button
+            class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition"
+            data-year="2025"
+            aria-pressed="false">
+            2025 - 2026
+          </button>
+
+          <!-- 2024-2025 THIRD -->
+          <button
+            class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition"
+            data-year="2024"
+            aria-pressed="false">
+            2024 - 2025
+          </button>
+
+          <!-- 2023-2024 FOURTH -->
+          <button
+            class="year-btn px-5 py-2 rounded-full text-purple-300 border border-purple-500 hover:bg-purple-700 hover:text-white transition"
+            data-year="2023"
+            aria-pressed="false">
+            2023 - 2024
+          </button>
+
         </div>
 
         <!-- Cards Grid -->
-        <div id="bearers-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 perspective-1000" data-aos="fade-up" data-aos-offset="200">
+        <div
+          id="bearers-container"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 perspective-1000"
+          data-aos="fade-up"
+          data-aos-offset="200">
+
           <!-- Bearers will be rendered here -->
+
         </div>
+
       </section>
 
     </main>
@@ -132,14 +173,20 @@
 
   <!-- AOS Script -->
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
   <script>
+
     AOS.init({
       duration: 1500,
-      
       easing: 'ease-in-out'
     });
 
+
     const data = {
+
+      /* =========================
+         2023 - 2024
+         ========================= */
       2023: [
         {
           name: "Sathya Seelan .M",
@@ -166,6 +213,11 @@
           img: "./assets/img/17 RANA SUSHMITHA.jpg"
         }
       ],
+
+
+      /* =========================
+         2024 - 2025
+         ========================= */
       2024: [
         {
           name: "Sathya Seelan .M",
@@ -198,6 +250,11 @@
           img: "./assets/img/13 PARAMESHWAR.jpg"
         }
       ],
+
+
+      /* =========================
+         2025 - 2026
+         ========================= */
       2025: [
         {
           name: "Naveen Bharathi.B",
@@ -224,6 +281,11 @@
           img: "./assets/img/19 lakshmipriya.jpg"
         }
       ],
+
+
+      /* =========================
+         2026 - 2027
+         ========================= */
       2026: [
         {
           name: "Thanush Kumar.P",
@@ -237,86 +299,149 @@
           batch: "2023-2027",
           img: "./assets/img/Archana devi.JPG"
         },
-       {
-         name: "Sharveshwaran.S.P",
-         role: "Vice President",
-         batch: "2024-2028",
-         img: "./assets/img/Sharveshwaran.JPG"
+        {
+          name: "Sharveshwaran.S.P",
+          role: "Vice President",
+          batch: "2024-2028",
+          img: "./assets/img/Sharveshwaran.JPG"
         },
         {
-         name: "Rishikesh.K",
-         role: "Secretary",
-         batch: "2023-2027",
-         img: "./assets/img/Rishikesh.JPG"
-         
-         
-      
-      },
-      {
-        name: "Shanmugapriya.N",
-        role: "Secretary",
-        batch: "2024-2028",
-        img: "./assets/img/Shanmugapriya.JPG"
-     },
-     {
-        name: "Sharunethra",
-        role: "Joint Secretary",
-        batch: "2025-2029",
-        img: "./assets/img/Sharunethra.JPG"
-     },
-     {
-        name: "Nirosh Kumar.R",
-        role: "Joint Secretary",
-        batch: "2025-2029",
-        img: "./assets/img/Niroshkumar.JPG"
-     }
+          name: "Rishikesh.K",
+          role: "Secretary",
+          batch: "2023-2027",
+          img: "./assets/img/Rishikesh.JPG"
+        },
+        {
+          name: "Shanmugapriya.N",
+          role: "Secretary",
+          batch: "2024-2028",
+          img: "./assets/img/Shanmugapriya.JPG"
+        },
+        {
+          name: "Sarunethra.V",
+          role: "Joint Secretary",
+          batch: "2025-2029",
+          img: "./assets/img/Sharunethra.JPG"
+        },
+        {
+          name: "Nirosh Kumar.R",
+          role: "Joint Secretary",
+          batch: "2025-2029",
+          img: "./assets/img/Niroshkumar.JPG"
+        }
       ]
+
     };
+
 
     const container = document.getElementById('bearers-container');
     const buttons = document.querySelectorAll('.year-btn');
 
+
     function renderYear(year) {
+
       container.innerHTML = '';
+
       data[year].forEach(bearer => {
+
         const card = document.createElement('div');
+
         card.className =
           'bg-white rounded-xl shadow-lg p-6 flex flex-col items-center text-center space-y-3 transform transition-transform duration-[1500ms] hover:-translate-y-2 hover:shadow-2xl';
 
         card.innerHTML = `
-          <div class="overflow-hidden rounded-lg w-24 h-24 sm:w-28 sm:h-28 transform transition-transform duration-[1500ms] ease-in-out hover:scale-110 hover:rotate-1" data-aos="flip-left">
-            <img src="${bearer.img}" alt="${bearer.name}" class="w-full h-full object-cover" />
+
+          <div
+            class="overflow-hidden rounded-lg w-24 h-24 sm:w-28 sm:h-28 transform transition-transform duration-[1500ms] ease-in-out hover:scale-110 hover:rotate-1"
+            data-aos="flip-left">
+
+            <img
+              src="${bearer.img}"
+              alt="${bearer.name}"
+              class="w-full h-full object-cover" />
+
           </div>
+
           <span class="bg-blue-900 text-white text-sm font-medium px-3 py-1 rounded-full">
             ${bearer.role}
           </span>
-          <p class="text-lg font-semibold text-gray-900">${bearer.name}</p>
-          <p class="text-sm text-gray-600">Batch: ${bearer.batch}</p>
+
+          <p class="text-lg font-semibold text-gray-900">
+            ${bearer.name}
+          </p>
+
+          <p class="text-sm text-gray-600">
+            Batch: ${bearer.batch}
+          </p>
+
         `;
+
         container.appendChild(card);
+
       });
-      AOS.refresh(); // Important to re-trigger AOS on dynamic content
+
+      AOS.refresh();
+
     }
 
-    // Initial load
-    renderYear("2025");
 
-    // Button click logic
+    // ==========================================
+    // INITIAL LOAD
+    // 2026 - 2027 will show FIRST
+    // ==========================================
+    renderYear("2026");
+
+
+    // ==========================================
+    // BUTTON CLICK LOGIC
+    // ==========================================
+
     buttons.forEach(btn => {
+
       btn.addEventListener('click', () => {
+
         buttons.forEach(b => {
-          b.classList.remove('bg-purple-700', 'text-white');
-          b.classList.add('text-purple-300');
-          b.setAttribute('aria-pressed', 'false');
+
+          b.classList.remove(
+            'bg-purple-700',
+            'text-white'
+          );
+
+          b.classList.add(
+            'text-purple-300'
+          );
+
+          b.setAttribute(
+            'aria-pressed',
+            'false'
+          );
+
         });
 
-        btn.classList.add('bg-purple-700', 'text-white');
-        btn.classList.remove('text-purple-300');
-        btn.setAttribute('aria-pressed', 'true');
 
-        renderYear(btn.getAttribute('data-year'));
+        btn.classList.add(
+          'bg-purple-700',
+          'text-white'
+        );
+
+        btn.classList.remove(
+          'text-purple-300'
+        );
+
+        btn.setAttribute(
+          'aria-pressed',
+          'true'
+        );
+
+
+        renderYear(
+          btn.getAttribute('data-year')
+        );
+
       });
+
     });
+
   </script>
 
 </body>
