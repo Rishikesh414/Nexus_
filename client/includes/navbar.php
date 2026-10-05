@@ -99,7 +99,7 @@
                 ring-4 ring-purple-500/40
                 transition hover:scale-110 hover:ring-purple-400">
 
-      <img src="./assets/img/ne.png"
+      <img src="./assets/img/image (1).png"
            alt="Logo"
            class="w-22 h-22 object-contain rounded-full">
 
